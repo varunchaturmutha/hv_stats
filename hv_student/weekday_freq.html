@@ -1,0 +1,85 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    
+      <meta charset="utf-8">
+      <title>Histogram for Student Helioviewer Movies generated generated every day</title>
+      
+      
+        
+          
+        
+        
+          
+        <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-2.2.1.min.js" integrity="sha384-qkRvDQVAIfzsJo40iRBbxt6sttt0hv4lh74DG7OK4MCHv4C5oohXYoHUM5W11uqS" crossorigin="anonymous"></script>
+        <script type="text/javascript">
+            Bokeh.set_log_level("info");
+        </script>
+        
+      
+      
+    
+  </head>
+  
+  
+  <body>
+    
+      
+        
+          
+          
+            
+              <div class="bk-root" id="c446e948-381b-42b3-b4ea-89faa24fba51" data-root-id="21448"></div>
+            
+          
+        
+      
+      
+        <script type="application/json" id="21589">
+          {"91fe888d-a93c-480b-a993-08fb50149007":{"roots":{"references":[{"attributes":{"bottom":{"value":0.1},"fill_alpha":{"value":0.1},"fill_color":{"field":"weekday","transform":{"id":"21356"}},"line_alpha":{"value":0.1},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21360","type":"VBar"},{"attributes":{"bottom":{"value":0.1},"fill_alpha":{"value":0.5},"fill_color":{"field":"weekday","transform":{"id":"21357"}},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21361","type":"VBar"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"palette":["#3288bd","#99d594","#e6f598","#ffffbf","#fee08b","#fc8d59","#d53e4f"]},"id":"21357","type":"CategoricalColorMapper"},{"attributes":{"data_source":{"id":"21325"},"glyph":{"id":"21359"},"hover_glyph":{"id":"21361"},"muted_glyph":null,"nonselection_glyph":{"id":"21360"},"selection_glyph":null,"view":{"id":"21363"}},"id":"21362","type":"GlyphRenderer"},{"attributes":{"child":{"id":"21387"},"title":"log"},"id":"21447","type":"Panel"},{"attributes":{},"id":"21377","type":"NumeralTickFormatter"},{"attributes":{},"id":"21367","type":"CategoricalTickFormatter"},{"attributes":{},"id":"21342","type":"PanTool"},{"attributes":{"text":"Total Movies generated: 14,642 | Total Days: 1,024 (excluding 0 days of server downtime)","text_font_style":"italic"},"id":"21442","type":"Title"},{"attributes":{"bottom":{"value":0.1},"fill_color":{"field":"weekday","transform":{"id":"21356"}},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21359","type":"VBar"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","top_units":"screen"},"id":"21409","type":"BoxAnnotation"},{"attributes":{},"id":"21438","type":"NumeralTickFormatter"},{"attributes":{},"id":"21346","type":"ResetTool"},{"attributes":{},"id":"21370","type":"UnionRenderers"},{"attributes":{"align":"center","text":"","text_font_size":{"value":"18pt"}},"id":"21365","type":"Title"},{"attributes":{},"id":"21343","type":"WheelZoomTool"},{"attributes":{"source":{"id":"21325"}},"id":"21363","type":"CDSView"},{"attributes":{"overlay":{"id":"21348"}},"id":"21344","type":"BoxZoomTool"},{"attributes":{"callback":null,"mode":"vline","tooltips":[["#Movies generated","@count{0,0}"],["Percentage of Movies generated","@percent%"]]},"id":"21445","type":"HoverTool"},{"attributes":{"child":{"id":"21326"},"title":"linear"},"id":"21386","type":"Panel"},{"attributes":{"num_minor_ticks":10},"id":"21400","type":"LogTicker"},{"attributes":{},"id":"21339","type":"BasicTicker"},{"attributes":{"level":"glyph","source":{"id":"21325"},"text":{"field":"percent%"},"x":{"field":"weekday"},"x_offset":{"value":-30},"y":{"field":"count"}},"id":"21382","type":"LabelSet"},{"attributes":{"text":"Total Movies generated: 14,642 | Total Days: 1,024 (excluding 0 days of server downtime)","text_font_style":"italic"},"id":"21381","type":"Title"},{"attributes":{},"id":"21371","type":"Selection"},{"attributes":{"axis":{"id":"21396"},"grid_line_color":"white","ticker":null},"id":"21398","type":"Grid"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"21403"},{"id":"21404"},{"id":"21405"},{"id":"21406"},{"id":"21407"},{"id":"21408"},{"id":"21445"}]},"id":"21410","type":"Toolbar"},{"attributes":{},"id":"21347","type":"HelpTool"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]},"id":"21388","type":"FactorRange"},{"attributes":{},"id":"21331","type":"CategoricalScale"},{"attributes":{"callback":null,"mode":"vline","tooltips":[["#Movies generated","@count{0,0}"],["Percentage of Movies generated","@percent%"]]},"id":"21384","type":"HoverTool"},{"attributes":{},"id":"21397","type":"CategoricalTicker"},{"attributes":{},"id":"21408","type":"HelpTool"},{"attributes":{"label":{"value":"weekday"},"renderers":[{"id":"21423"}]},"id":"21435","type":"LegendItem"},{"attributes":{},"id":"21392","type":"CategoricalScale"},{"attributes":{"bottom":{"value":0.1},"fill_alpha":{"value":0.1},"fill_color":{"field":"weekday","transform":{"id":"21417"}},"line_alpha":{"value":0.1},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21421","type":"VBar"},{"attributes":{"axis_label":"Movies count","axis_label_text_font_size":"12pt","formatter":{"id":"21377"},"major_label_text_font_size":"12pt","ticker":{"id":"21339"}},"id":"21338","type":"LinearAxis"},{"attributes":{"items":[{"id":"21435"}],"location":"top_center","orientation":"horizontal"},"id":"21434","type":"Legend"},{"attributes":{},"id":"21394","type":"LogScale"},{"attributes":{"end":4048.5,"start":0.1},"id":"21329","type":"DataRange1d"},{"attributes":{"axis_label":"Movies count","axis_label_text_font_size":"12pt","formatter":{"id":"21438"},"major_label_text_font_size":"12pt","ticker":{"id":"21400"}},"id":"21399","type":"LogAxis"},{"attributes":{"level":"glyph","source":{"id":"21325"},"text":{"field":"percent%"},"x":{"field":"weekday"},"x_offset":{"value":-30},"y":{"field":"count"}},"id":"21443","type":"LabelSet"},{"attributes":{"source":{"id":"21325"}},"id":"21424","type":"CDSView"},{"attributes":{},"id":"21428","type":"CategoricalTickFormatter"},{"attributes":{},"id":"21345","type":"SaveTool"},{"attributes":{"bottom":{"value":0.1},"fill_alpha":{"value":0.5},"fill_color":{"field":"weekday","transform":{"id":"21418"}},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21422","type":"VBar"},{"attributes":{"axis":{"id":"21399"},"dimension":1,"grid_line_color":"white","ticker":null},"id":"21402","type":"Grid"},{"attributes":{"end":140218.18034406236,"start":0.1},"id":"21390","type":"DataRange1d"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"palette":["#3288bd","#99d594","#e6f598","#ffffbf","#fee08b","#fc8d59","#d53e4f"]},"id":"21356","type":"CategoricalColorMapper"},{"attributes":{"text":"Date range: 2017, Nov 27 - 2020, Sep 15"},"id":"21441","type":"Title"},{"attributes":{"data":{"count":[1980,2391,2699,2429,2348,1350,1445],"index":[0,1,2,3,4,5,6],"percent":{"__ndarray__":"CtejcD0KK0AUrkfhelQwQK5H4XoUbjJA16NwPQqXMEAK16NwPQowQHE9CtejcCJAPQrXo3C9I0A=","dtype":"float64","order":"little","shape":[7]},"percent%":["13.52%","16.33%","18.43%","16.59%","16.04%","9.22%","9.87%"],"vbar_top":["1980\n13.52%","2391\n16.33%","2699\n18.43%","2429\n16.59%","2348\n16.04%","1350\n9.22%","1445\n9.87%"],"weekday":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]},"selected":{"id":"21371"},"selection_policy":{"id":"21370"}},"id":"21325","type":"ColumnDataSource"},{"attributes":{"label":{"value":"weekday"},"renderers":[{"id":"21362"}]},"id":"21374","type":"LegendItem"},{"attributes":{"align":"center","text":"","text_font_size":{"value":"18pt"}},"id":"21426","type":"Title"},{"attributes":{"active_drag":"auto","active_inspect":"auto","active_multi":null,"active_scroll":"auto","active_tap":"auto","tools":[{"id":"21342"},{"id":"21343"},{"id":"21344"},{"id":"21345"},{"id":"21346"},{"id":"21347"},{"id":"21384"}]},"id":"21349","type":"Toolbar"},{"attributes":{"data_source":{"id":"21325"},"glyph":{"id":"21420"},"hover_glyph":{"id":"21422"},"muted_glyph":null,"nonselection_glyph":{"id":"21421"},"selection_glyph":null,"view":{"id":"21424"}},"id":"21423","type":"GlyphRenderer"},{"attributes":{},"id":"21336","type":"CategoricalTicker"},{"attributes":{"axis":{"id":"21335"},"grid_line_color":"white","ticker":null},"id":"21337","type":"Grid"},{"attributes":{},"id":"21406","type":"SaveTool"},{"attributes":{},"id":"21333","type":"LinearScale"},{"attributes":{},"id":"21407","type":"ResetTool"},{"attributes":{"text":"Date range: 2017, Nov 27 - 2020, Sep 15"},"id":"21380","type":"Title"},{"attributes":{"overlay":{"id":"21409"}},"id":"21405","type":"BoxZoomTool"},{"attributes":{"text":"Frequency of Student Helioviewer Movies generated generated per weekday","text_font_size":{"value":"16pt"}},"id":"21379","type":"Title"},{"attributes":{"axis_label":"Weekdays","axis_label_text_font_size":"12pt","formatter":{"id":"21428"},"major_label_text_font_size":"12pt","ticker":{"id":"21397"}},"id":"21396","type":"CategoricalAxis"},{"attributes":{"axis":{"id":"21338"},"dimension":1,"grid_line_color":"white","ticker":null},"id":"21341","type":"Grid"},{"attributes":{"bottom_units":"screen","fill_alpha":0.5,"fill_color":"lightgrey","left_units":"screen","level":"overlay","line_alpha":1.0,"line_color":"black","line_dash":[4,4],"line_width":2,"right_units":"screen","top_units":"screen"},"id":"21348","type":"BoxAnnotation"},{"attributes":{"items":[{"id":"21374"}],"location":"top_center","orientation":"horizontal"},"id":"21373","type":"Legend"},{"attributes":{},"id":"21403","type":"PanTool"},{"attributes":{},"id":"21404","type":"WheelZoomTool"},{"attributes":{"text":"Frequency of Student Helioviewer Movies generated generated per weekday","text_font_size":{"value":"16pt"}},"id":"21440","type":"Title"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"palette":["#3288bd","#99d594","#e6f598","#ffffbf","#fee08b","#fc8d59","#d53e4f"]},"id":"21417","type":"CategoricalColorMapper"},{"attributes":{"bottom":{"value":0.1},"fill_color":{"field":"weekday","transform":{"id":"21417"}},"line_color":{"value":"white"},"top":{"field":"count"},"width":{"value":0.75},"x":{"field":"weekday"}},"id":"21420","type":"VBar"},{"attributes":{"axis_label":"Weekdays","axis_label_text_font_size":"12pt","formatter":{"id":"21367"},"major_label_text_font_size":"12pt","ticker":{"id":"21336"}},"id":"21335","type":"CategoricalAxis"},{"attributes":{"tabs":[{"id":"21386"},{"id":"21447"}]},"id":"21448","type":"Tabs"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],"palette":["#3288bd","#99d594","#e6f598","#ffffbf","#fee08b","#fc8d59","#d53e4f"]},"id":"21418","type":"CategoricalColorMapper"},{"attributes":{"above":[{"id":"21379"},{"id":"21380"},{"id":"21381"}],"aspect_ratio":1.7777777777777777,"background_fill_color":"#fafafa","below":[{"id":"21335"}],"border_fill_color":"whitesmoke","center":[{"id":"21337"},{"id":"21341"},{"id":"21373"},{"id":"21382"}],"left":[{"id":"21338"}],"plot_width":1000,"renderers":[{"id":"21362"}],"title":{"id":"21365"},"toolbar":{"id":"21349"},"x_range":{"id":"21327"},"x_scale":{"id":"21331"},"y_range":{"id":"21329"},"y_scale":{"id":"21333"}},"id":"21326","subtype":"Figure","type":"Plot"},{"attributes":{"above":[{"id":"21440"},{"id":"21441"},{"id":"21442"}],"aspect_ratio":1.7777777777777777,"background_fill_color":"#fafafa","below":[{"id":"21396"}],"border_fill_color":"whitesmoke","center":[{"id":"21398"},{"id":"21402"},{"id":"21434"},{"id":"21443"}],"left":[{"id":"21399"}],"plot_width":1000,"renderers":[{"id":"21423"}],"title":{"id":"21426"},"toolbar":{"id":"21410"},"x_range":{"id":"21388"},"x_scale":{"id":"21392"},"y_range":{"id":"21390"},"y_scale":{"id":"21394"}},"id":"21387","subtype":"Figure","type":"Plot"},{"attributes":{"factors":["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"]},"id":"21327","type":"FactorRange"}],"root_ids":["21448"]},"title":"Bokeh Application","version":"2.2.1"}}
+        </script>
+        <script type="text/javascript">
+          (function() {
+            var fn = function() {
+              Bokeh.safely(function() {
+                (function(root) {
+                  function embed_document(root) {
+                    
+                  var docs_json = document.getElementById('21589').textContent;
+                  var render_items = [{"docid":"91fe888d-a93c-480b-a993-08fb50149007","root_ids":["21448"],"roots":{"21448":"c446e948-381b-42b3-b4ea-89faa24fba51"}}];
+                  root.Bokeh.embed.embed_items(docs_json, render_items);
+                
+                  }
+                  if (root.Bokeh !== undefined) {
+                    embed_document(root);
+                  } else {
+                    var attempts = 0;
+                    var timer = setInterval(function(root) {
+                      if (root.Bokeh !== undefined) {
+                        clearInterval(timer);
+                        embed_document(root);
+                      } else {
+                        attempts++;
+                        if (attempts > 100) {
+                          clearInterval(timer);
+                          console.log("Bokeh: ERROR: Unable to run BokehJS code because BokehJS library is missing");
+                        }
+                      }
+                    }, 10, root)
+                  }
+                })(window);
+              });
+            };
+            if (document.readyState != "loading") fn();
+            else document.addEventListener("DOMContentLoaded", fn);
+          })();
+        </script>
+    
+  </body>
+  
+</html>
