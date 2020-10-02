@@ -77,14 +77,14 @@ def hv_prepare(hv, sourceId, obs=None):
     return hv
 
 def major_features(p, df):
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2011/06/07'), x2=pd.Timestamp('2011/06/08'), fill_color='red', fill_alpha=0.7, legend= "failed eruption (2011/06/07)")
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2013/11/28'), x2=pd.Timestamp('2013/11/29'), fill_color='purple', fill_alpha=0.7, legend= "Comet ISON (2013/11/28)")
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2017/09/06'), x2=pd.Timestamp('2017/09/10'), fill_color='teal', fill_alpha=0.5, legend= "large flares (2017/09/06-09)")
+    p.line(y=np.arange(0, np.nanmax(df['count'])), x=pd.Timestamp('2011/06/07'), line_width=1.5, line_dash='dotdash', color='red', alpha=1, legend_label= "failed eruption (2011/06/07)")
+    p.line(y=np.arange(0, np.nanmax(df['count'])), x=pd.Timestamp('2013/11/28'), line_width=1.5, line_dash='dotdash', color='purple', alpha=1, legend_label= "Comet ISON (2013/11/28)")
+    p.harea(y=np.arange(0, np.nanmax(df['count'])), x1=pd.Timestamp('2017/09/06'), x2=pd.Timestamp('2017/09/10'), fill_color='teal', fill_alpha=1, legend_label= "large flares (2017/09/06-09)")
 
 def service_pause(p, df):
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2011/08/11'), x2=pd.Timestamp('2011/09/18'), fill_color='gray', fill_alpha=0.3, legend= "GSFC server repair (2011/08/11 - 2011/09/18)")
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2015/02/04'), x2=pd.Timestamp('2015/09/23'), fill_color='red', fill_alpha=0.1, legend= "GSFC server down (2015/02/04 - 2015/09/23)")
-    p.harea(y=range(0, df['count'].max()), x1=pd.Timestamp('2013/10/01'), x2=pd.Timestamp('2013/10/16'), fill_color='green', fill_alpha=0.3, legend= "U.S. Fed. Gov. shutdown (2013/10/01 - 2013/10/16)")
+    p.harea(y=np.arange(0, np.nanmax(df['count'])), x1=pd.Timestamp('2011/08/11'), x2=pd.Timestamp('2011/09/18'), fill_color='gray', fill_alpha=0.3, legend_label= "GSFC server repair (2011/08/11 - 2011/09/18)")
+    p.harea(y=np.arange(0, np.nanmax(df['count'])), x1=pd.Timestamp('2013/10/01'), x2=pd.Timestamp('2013/10/16'), fill_color='green', fill_alpha=0.3, legend_label= "U.S. Fed. Gov. shutdown (2013/10/01 - 2013/10/16)")
+    p.harea(y=np.arange(0, np.nanmax(df['count'])), x1=pd.Timestamp('2015/02/04'), x2=pd.Timestamp('2015/09/23'), fill_color='red', fill_alpha=0.1, legend_label= "GSFC server down (2015/02/04 - 2015/09/23)")
 
 def bin_width(m):
     n = np.int(np.log10(m+1))
