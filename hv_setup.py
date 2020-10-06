@@ -24,6 +24,11 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLoc
 from pathlib import Path
 from joblib import Parallel, delayed
 
+def sql_hv(sourceId, obs=None):
+    query = "SELECT date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) WHERE sourceId={} GROUP BY date_format(date, '%Y-%m-%d 00:00:00');".format(sourceId)
+    hv = sql_query(query)
+    return hv_prepare(hv, sourceId, obs)
+
 def sql_query(sql_select_Query):
     import mysql.connector
     from mysql.connector import Error
