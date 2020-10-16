@@ -24,8 +24,9 @@ in the following format:
 
 ### config file
 [database]
-dbhost = "host"
-dbname = "name"
-dbuser = "user"
-dbpass = "password"
+dbhost = "host"<br />
+dbname = "name"<br />
+dbuser = "user"<br />
+dbpass = "password"<br />
+
 ### end of config file
