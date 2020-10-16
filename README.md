@@ -15,4 +15,17 @@ Run in Python3.7.4 (or >v3)
 pip3 install numpy scipy datetime pandas  mysql-connector-python bokeh==2.2.1  matplotlib pathlib joblib
 
 # SQL Credentials
-Edit the "cred.txt" file to add your credentials.
+Expecting either of the two files to contain SQL database credentials:
+
+"/var/www/api.helioviewer.org/install/settings.cfg" 
+OR
+"./cred.cfg"
+in the following format:
+
+### config file
+[database]
+dbhost = "host"
+dbname = "name"
+dbuser = "user"
+dbpass = "password"
+### end of config file
