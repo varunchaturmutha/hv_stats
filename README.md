@@ -17,16 +17,14 @@ pip3 install numpy scipy datetime pandas  mysql-connector-python bokeh==2.2.1  m
 # SQL Credentials
 Expecting either of the two files to contain SQL database credentials:
 
-"/var/www/api.helioviewer.org/install/settings.cfg" 
-OR
-"./cred.cfg"
-in the following format:
+"/var/www/api.helioviewer.org/install/settings.cfg" <br	/>
+OR<br />
+"./cred.cfg"<br	/>
+in the following format:<br	/>
 
-### config file
-[database]
+### settings.cfg
+[database]<br />
 dbhost = "host"<br />
 dbname = "name"<br />
 dbuser = "user"<br />
 dbpass = "password"<br />
-
-### end of config file
