@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 # %load_ext autoreload
 # %autoreload 2
 import os
+import sys
 import numpy as np
 from scipy import stats
 import time
@@ -44,40 +45,32 @@ from joblib import Parallel, delayed
 
 import warnings
 warnings.filterwarnings("ignore")
-
+import configparser
 # from hv_setup import *
 
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-import configparser
 
-
-# In[2]:
+# In[ ]:
 
 
 master_time = time.time()
 
 
-# In[21]:
-
-
-cred
-
-
-# In[27]:
+# In[ ]:
 
 
 cred={}
-if os.path.exists("/var/www/api.helioviewer.org/install/settings.cfg"):
-    configFilePath = "/var/www/api.helioviewer.org/install/settings.cfg"
+if os.path.exists("/var/www/api.helioviewer.org/install/settings/settings.cfg"):
+    configFilePath = "/var/www/api.helioviewer.org/install/settings/settings.cfg"
     configParser = configparser.RawConfigParser()   
     configParser.read(configFilePath)
     cred['dbhost'] = configParser.get('database', 'dbhost')
     cred['dbname'] = configParser.get('database', 'dbname')
     cred['dbuser'] = configParser.get('database', 'dbuser')
     cred['dbpass'] = configParser.get('database', 'dbpass')
-elif os.path.exists("./cred.cfg"):
-    configFilePath = './cred.cfg'
+elif os.path.exists("/home/varun/cred.cfg"):
+    configFilePath = "/home/varun/cred.cfg"
     configParser = configparser.RawConfigParser()   
     configParser.read(configFilePath)
     cred['dbhost'] = configParser.get('database', 'dbhost')
@@ -86,6 +79,7 @@ elif os.path.exists("./cred.cfg"):
     cred['dbpass'] = configParser.get('database', 'dbpass')
 else:
     print("ERROR: Please provide a config file with database credentials.")
+    sys.exit()
         
 def sql_query(sql_select_Query):
 
@@ -155,7 +149,7 @@ def bin_width(m):
     return bw#, m//n+1
 
 
-# In[29]:
+# In[ ]:
 
 
 json_url = urllib.request.urlopen('https://api.helioviewer.org/?action=getDataSources')
@@ -188,10 +182,16 @@ for key1 in hv_keys.keys():
                                             hv_sid.loc[len(hv_sid)] = " ".join([key1, key2, key3, key4, key5,key6]), hv_keys[key1][key2][key3][key4][key5][key6]['sourceId']    
 
 
-# In[30]:
+# In[ ]:
 
 
 hv_sid = hv_sid.sort_values(['SOURCE_ID']).reset_index(drop=True)
+hv_sid['DATA_FREQ'] = 0
+
+hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['94', '131', '171', '193', '211', '304', '335']))), 'DATA_FREQ'] = 36
+hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['1600', '1700']))), 'DATA_FREQ'] = 48
+hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['4500']))), 'DATA_FREQ'] = 3600
+
 # hv_sid = hv_sid.set_index('SOURCE_ID')
 # hv_sid = hv_sid.reindex(range(hv_sid.index.min(), hv_sid.index.max()+1), fill_value='Empty').reset_index()
 # hv_sid
@@ -215,18 +215,18 @@ print("Querying completed in %d seconds."%(time.time()-start_time))
 # In[ ]:
 
 
-hv_obs = {}
-hv_sid_drop = hv_sid.copy()
+hv = {}
+hv_sid = hv_sid.copy()
 for (i, df), (ind, sid) in zip(enumerate(results), 
-                               hv_sid_drop.iterrows()):
+                               hv_sid.iterrows()):
     if df.empty:
-        hv_sid_drop = hv_sid_drop.drop(index = ind)
+        hv_sid = hv_sid.drop(index = ind)
         continue
-    hv_obs[df['SOURCE_ID'].unique()[0]] = df
+    hv[df['SOURCE_ID'].unique()[0]] = df
 #     print(df['SOURCE_ID'].unique()[0])
-# ind = np.random.choice(list(hv_obs.keys()))
+# ind = np.random.choice(list(hv.keys()))
 # print(ind)
-# hv_obs[ind]
+# hv[ind]
 
 
 # ## Data Gaps
@@ -234,27 +234,21 @@ for (i, df), (ind, sid) in zip(enumerate(results),
 # In[ ]:
 
 
-# hv_obs = {}
-# hv_sid_drop_drop = hv_sid_drop.copy()
-# for i in range(len(hv_sid_drop_drop)):
+# hv = {}
+# hv_sid = hv_sid.copy()
+# for i in range(len(hv_sid)):
 #     if results[i].empty:
-#         hv_sid_drop_drop = hv_sid_drop_drop.drop(index = hv_sid_drop_drop.index[hv_sid_drop_drop.index == i])
+#         hv_sid = hv_sid.drop(index = hv_sid.index[hv_sid.index == i])
 #         continue
-#     hv_obs[hv_sid_drop_drop.iloc[i]['SOURCE_ID']] = results[i]
-# # ind = np.random.choice(list(hv_obs.keys())), 
-# hv_obs[np.random.choice(list(hv_obs.keys()))]
+#     hv[hv_sid.iloc[i]['SOURCE_ID']] = results[i]
+# # ind = np.random.choice(list(hv.keys())), 
+# hv[np.random.choice(list(hv.keys()))]
 
 
 # ### All AIA instrument gaps combined
 
 # In[ ]:
 
-
-hv_sid_drop['DATA_FREQ'] = 0
-
-hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['94', '131', '171', '193', '211', '304', '335']))), 'DATA_FREQ'] = 36
-hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['1600', '1700']))), 'DATA_FREQ'] = 48
-hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['4500']))), 'DATA_FREQ'] = 3600
 
 gapfill_percentage = 80
 
@@ -263,10 +257,10 @@ gapfill_percentage = 80
 
 
 df_gaps=pd.DataFrame()
-h = hv_sid_drop.loc[hv_sid_drop['OBS'].str.match('SDO AIA')].iloc[:].reset_index(drop=True)
+h = hv_sid.loc[hv_sid['OBS'].str.match('SDO AIA')].iloc[:].reset_index(drop=True)
 for ind, df_obs in h.iterrows():
     sid = df_obs['SOURCE_ID']
-    df = hv_obs[sid].copy()
+    df = hv[sid].copy()
     name = df_obs['OBS']
     name_ = name.replace(" ", "_")
     df = df.dropna().reset_index(drop=True)
@@ -294,11 +288,11 @@ df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',
 # In[ ]:
 
 
-# hv_sid_drop['DATA_FREQ'] = 0
+# hv_sid['DATA_FREQ'] = 0
 
-# hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['94', '131', '171', '193', '211', '304', '335']))), 'DATA_FREQ'] = 36
-# hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['1600', '1700']))), 'DATA_FREQ'] = 48
-# hv_sid_drop.loc[(hv_sid_drop['OBS'].str.contains('SDO AIA')) & (hv_sid_drop['OBS'].str.contains("|".join(['4500']))), 'DATA_FREQ'] = 3600
+# hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['94', '131', '171', '193', '211', '304', '335']))), 'DATA_FREQ'] = 36
+# hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['1600', '1700']))), 'DATA_FREQ'] = 48
+# hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['4500']))), 'DATA_FREQ'] = 3600
 
 # gapfill_percentage = 80
 
@@ -306,10 +300,10 @@ df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',
 # if not os.path.exists(directory):
 #     os.makedirs(directory)
 
-# h = hv_sid_drop.loc[hv_sid_drop['OBS'].str.match('SDO AIA')].iloc[:].reset_index(drop=True)
+# h = hv_sid.loc[hv_sid['OBS'].str.match('SDO AIA')].iloc[:].reset_index(drop=True)
 # for ind, df_obs in h.iterrows():
 #     sid = df_obs['SOURCE_ID']
-#     df = hv_obs[sid].copy()
+#     df = hv[sid].copy()
 #     name = df_obs['OBS']
 #     name_ = name.replace(" ", "_")
 #     df = df.dropna().reset_index(drop=True)
@@ -327,8 +321,8 @@ df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',
 #     df.to_csv(f, columns=["startDate", "endDate", "count",], index=False)
 #     f.close()
 
-# for sid in hv_obs.keys():
-#     df = hv_obs[sid].copy()
+# for sid in hv.keys():
+#     df = hv[sid].copy()
 #     name = df['OBS'].unique()[0]
 #     name_ = name.replace(" ", "_")
     
@@ -352,9 +346,9 @@ if not os.path.exists(directory):
     
 for observatory in hv_keys.keys():
     panels_obs=[]
-    for ind, df_obs in hv_sid_drop[hv_sid_drop['OBS'].str.match(observatory)].iterrows():
+    for ind, df_obs in hv_sid[hv_sid['OBS'].str.match(observatory)].iterrows():
         
-        df = hv_obs[df_obs['SOURCE_ID']].copy()
+        df = hv[df_obs['SOURCE_ID']].copy()
         df['index'] = (df['date'].dt.year - df['date'].min().year)*12 + (df['date'].dt.month - df['date'].min().month)
         sid = df['SOURCE_ID'].unique()[0]
         name = df['OBS'][0]
@@ -381,8 +375,8 @@ for observatory in hv_keys.keys():
                        tooltips=[('Date', '@Year @Day'), ('#Data Files', '@count{0,0}')])
                        
 
-            total_days = (hv_obs[sid]['count']>=0).sum()
-            total_files = (hv_obs[sid]['count']).sum()
+            total_days = (hv[sid]['count']>=0).sum()
+            total_files = (hv[sid]['count']).sum()
             
             p.add_layout(Title(text="%s Coverage"%(name), text_font_size='14pt'), 'above')
             p.add_layout(Title(text="Date Range: %s - %s"%(df.dropna()['date'].min().strftime("%Y, %b %d"), df.dropna()['date'].max().strftime("%Y, %b %d"))), 'above')
@@ -444,8 +438,8 @@ for observatory in hv_keys.keys():
         
     tabs_obs = Tabs(tabs=panels_obs)
 #     show(tabs_obs)
-    save(tabs_obs, filename='./coverages/%s_coverage.html'%observatory, title="Coverage plot for %s"%observatory)
 #     break
+    save(tabs_obs, filename='./coverages/%s_coverage.html'%observatory, title="Coverage plot for %s"%observatory)
 print("Coverage plots completed.")
 
 
@@ -461,14 +455,14 @@ if not os.path.exists(directory):
 
 for observatory in hv_keys.keys():
     panels_obs=[]
-    for ind, df_obs in hv_sid_drop[hv_sid_drop['OBS'].str.match(observatory)].iterrows():
+    for ind, df_obs in hv_sid[hv_sid['OBS'].str.match(observatory)].iloc[:].iterrows():
         
-        df = hv_obs[df_obs['SOURCE_ID']].copy()
+        df = hv[df_obs['SOURCE_ID']].copy()
         sid = df['SOURCE_ID'].unique()[0]
         name = df['OBS'][0]
         name_ = name.replace(" ", "_")
 
-        df = hv_obs[sid].copy()
+        df = hv[sid].copy()
         df = df.dropna().reset_index(drop=True)
 
         name = df['OBS'].unique()[0]
@@ -511,16 +505,6 @@ for observatory in hv_keys.keys():
             # Add a quad glyph with source this time
             p.quad(bottom=0.9, top='count', left='left', right='right', source=hist_src, fill_color='navy', alpha=0.5,
                    hover_fill_color='navy', hover_fill_alpha=0.2, line_color='white', legend_label='Histogram')
-    #         p.y_range(Range1d(0.8,df_hist['count'].max()))
-            # Add style to the plot
-            p.title.align = 'center'
-            p.title.text_font_size = '18pt'
-            p.xaxis.axis_label_text_font_size = '12pt'
-            p.xaxis.major_label_text_font_size = '12pt'
-            p.yaxis.axis_label_text_font_size = '12pt'
-            p.yaxis.major_label_text_font_size = '12pt'
-            p.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
-            p.xaxis[0].formatter = NumeralTickFormatter(format='0,0')
             
             df_stats = pd.DataFrame({'height': np.linspace(0.5, df_hist['count'].max(), 2),
                                      'mean':np.nanmean(counts), 'median': np.nanmedian(counts), 'mode':stats.mode(counts)[0][0]})
@@ -538,7 +522,6 @@ for observatory in hv_keys.keys():
             p.add_layout(Title(text="Total Files: {:,.0f} | Total Days: {:,.0f} | Source ID: {}".format(total_files, total_days, sid), text_font_style="italic"),
                          place = 'above')
 
-    #         p.legend.location = "top_left"
     #         p.grid.grid_line_color="white"
 
     #         text_source = ColumnDataSource(dict(x=[x_bins.max()*3/4],y=[df_hist['count'].max()*3/4],text=['Total Day Count = \n %d'%total]))
@@ -551,37 +534,80 @@ for observatory in hv_keys.keys():
                                           ('Day count percentage', '@f_percent')],
                               mode= 'vline')
 
-            # Add the hover tool to the graph
             p.add_tools(hover)
+            
+            # Add style to the plot
+            if (df_hist['count'].max() - df_hist['count'].min())<=10:
+                p.yaxis.visible = False
+                ticker = SingleIntervalTicker(interval=1, num_minor_ticks=10)
+                yaxis = LinearAxis(ticker=ticker)
+                p.add_layout(yaxis, 'left')
+            
+            if (df_hist['right'].max() - df_hist['left'].min())<=10:
+                p.xaxis.visible = False
+                ticker = SingleIntervalTicker(interval=1, num_minor_ticks=10)
+                yaxis = LinearAxis(ticker=ticker)
+                p.add_layout(yaxis, 'below')
+            
+            p.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
+            p.xaxis[0].formatter = NumeralTickFormatter(format='0,0')
+            
+            p.yaxis.axis_label = "Day Count"
+            p.xaxis.axis_label = "No. of Data Files"
+            p.title.align = 'center'
+            p.title.text_font_size = '18pt'
+            p.xaxis.axis_label_text_font_size = '12pt'
+            p.xaxis.major_label_text_font_size = '12pt'
+            p.yaxis.axis_label_text_font_size = '12pt'
+            p.yaxis.major_label_text_font_size = '12pt'
+            p.legend.location = "top_right"
+            p.legend.background_fill_alpha = 0.3
             p.border_fill_color = "whitesmoke"
-
+            p.x_range.range_padding = 0.05
+            
+            ### Cumulative distribution plot
             p2 = figure(y_axis_type=axis_type,
-                       x_axis_label = 'No. of Data files', 
-                       y_axis_label = 'Day count',
                        background_fill_color="#fafafa")
                        
 
             p2_line = p2.line(x='x', y='count_cum', line_color='#036564', line_width=3, source=cum_src, legend_label="Cumulative distribution")
-    #         p2_circle = p2.circle(x='x', y='count_cum', line_color='#036564', line_width=5, source=cum_src, hover_line_alpha=0.5, legend_label="Cumulative distribution" )
             p2.add_layout(Title(text = "Cumulative Distribution for %s"%title, text_font_size = "16pt", text_font_style="bold"), place = 'above')
             p2.add_layout(Title(text="Date range: %s - %s"%(df['date'].min().strftime('%Y, %b %d'),df['date'].max().strftime('%Y, %b %d'))), 'above')
             p2.add_layout(Title(text="Total Files: {:,.0f} | Total Days: {:,.0f} | Source ID: {}".format(total_files, total_days, sid), text_font_style="italic"), 'above')
-#             p2.add_layout(Title(text="Total Days: %d"%total_days, text_font_style="italic"), 'above')
-#             p2.add_layout(Title(text="Source ID: %d"%sid, text_font_style="italic"), 'above')
-            
+
+            # Add the hover tool to the graph
             hover = HoverTool(line_policy='nearest', 
                               tooltips = [('#Data files', '<@x{0,0}'), 
                                           ('Cumulative Day count', '@count_cum{0,0}')], 
                               mode='vline')
+            p2.add_tools(hover)
+            
+            # Mean, median, mode statistics
             df_cumstats = pd.DataFrame({'height': np.linspace(df_cum['count_cum'].min(),df_cum['count_cum'].max(),2),
                                         'mean':np.nanmean(counts), 'median': np.nanmedian(counts), 'mode':stats.mode(counts)[0][0]})
-            p2.line(x='mean', y='height', line_color="black", line_dash='solid', line_width = 4, legend_label="Mean (%.2f)"%(df_cumstats['mean'][0]), source=df_cumstats)
-            p2.line(x='median', y='height', line_color = "red", line_dash='dashed', line_width=3, legend_label="Median (%.2f)"%(df_cumstats['median'][0]), source=df_cumstats)
+            p2.line(x='mean', y='height', line_color="black", line_dash='solid', line_width = 2, legend_label="Mean (%.2f)"%(df_cumstats['mean'][0]), source=df_cumstats)
+            p2.line(x='median', y='height', line_color = "red", line_dash='dashed', line_width=2, legend_label="Median (%.2f)"%(df_cumstats['median'][0]), source=df_cumstats)
 #             p2.line(x='mode', y='height', line_color = "lightgreen", line_dash = 'dashdot',line_width=2,legend_label="Mode (%.2f)"%(df_cumstats['mode'][0]), source=df_cumstats)
         
 
-            # Add the hover tool to the graph
-            p2.add_tools(hover)
+            # Add styling to the plot
+            if (df_cum['count_cum'].max() - df_cum['count_cum'].min())<=10:
+                p2.yaxis.visible = False
+                ticker = SingleIntervalTicker(interval=1, num_minor_ticks=10)
+                yaxis = LinearAxis(ticker=ticker)
+                p2.add_layout(yaxis, 'left')
+            
+            if (df_cum['x'].max() - df_cum['x'].min())<=10:
+                p2.xaxis.visible = False
+                ticker = SingleIntervalTicker(interval=1, num_minor_ticks=10)
+                yaxis = LinearAxis(ticker=ticker)
+                p2.add_layout(yaxis, 'below')
+            
+            p2.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
+            p2.xaxis[0].formatter = NumeralTickFormatter(format='0,0')
+            
+            p2.yaxis.axis_label = "Day Count"
+            p2.xaxis.axis_label = "No. of Data Files"
             p2.title.align = 'center'
             p2.title.text_font_size = '18pt'
             p2.xaxis.axis_label_text_font_size = '12pt'
@@ -589,9 +615,10 @@ for observatory in hv_keys.keys():
             p2.yaxis.axis_label_text_font_size = '12pt'
             p2.yaxis.major_label_text_font_size = '12pt'
             p2.legend.location = "bottom_right"
-            p2.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
-            p2.xaxis[0].formatter = NumeralTickFormatter(format='0,0')
+            p2.legend.background_fill_alpha = 0.3
             p2.border_fill_color = "whitesmoke"
+            p2.x_range.range_padding = 0.05
+            
             grid = gridplot([[p, p2]], sizing_mode='stretch_both')# width_policy='max', height_policy='max')#,plot_width=1200, plot_height=1000, sizing_mode='scale_width')#, plot_width=250, plot_height=250)
             panel = Panel(child=grid, title=axis_type)
             panels.append(panel)
@@ -601,8 +628,8 @@ for observatory in hv_keys.keys():
         panels_obs.append(panel_obs)
     tabs_obs = Tabs(tabs=panels_obs)
 #     show(tabs_obs)
-    save(tabs_obs, filename='./%s/%s_histogram.html'%(directory, observatory), title="Histogram and Cumulative distribution for %s"%observatory)
 #     break
+    save(tabs_obs, filename='./%s/%s_histogram.html'%(directory, observatory), title="Histogram and Cumulative distribution for %s"%observatory)
 print("Histograms and cumulative distribution plots completed.")
 
 
@@ -634,10 +661,13 @@ df = hv['hv_movies'].copy()
 df['reqDuration'] = pd.to_timedelta(df['reqDuration'], unit='s')/pd.Timedelta(days=1)
 df['reqDuration'].loc[df['reqDuration']>30] = np.nan
 df['genDuration'] = pd.to_timedelta((df['numFrames']/df['frameRate']), unit='s')/pd.Timedelta(seconds=1)
+
 outlier_count = df['genDuration'].loc[df['genDuration']>300]
-outlier_date = df['date'].loc[df['genDuration']>300].dt.strftime("%b %d %Y, %H:%M:%S").values[0]
+if not outlier_count.empty:
+    outlier_date = df['date'].loc[df['genDuration']>300].dt.strftime("%b %d %Y, %H:%M:%S").values[0]
+
 df['genDuration'].loc[df['genDuration']>300] = np.nan
-df.sort_values('genDuration')
+# df.sort_values('genDuration')
 
 
 # In[ ]:
@@ -689,15 +719,6 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
         # Add a quad glyph with source this time
         p_hist = p.quad(bottom=0.5, top='count', left='left', right='right', source=hist_src, fill_color='navy', alpha=0.5,
                hover_fill_color='navy', hover_fill_alpha=0.2, line_color='white', legend_label='Histogram')
-        # Add style to the plot
-        p.title.align = 'center'
-        p.title.text_font_size = '18pt'
-        p.xaxis.axis_label_text_font_size = '12pt'
-        p.xaxis.major_label_text_font_size = '12pt'
-        p.yaxis.axis_label_text_font_size = '12pt'
-        p.yaxis.major_label_text_font_size = '12pt'
-#         p.yaxis[0].formatter = PrintfTickFormatter(format="%f")
-        p.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
         
     #         p.add_layout(Span(location=1800, dimension='height'))#, legend_label='Expected date file count'))
         df_stats = pd.DataFrame({'height': np.linspace(min(df_hist['count'].min(),0.5),df_hist['count'].max(),2),
@@ -713,14 +734,15 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
                      place = 'above')
         p.add_layout(Title(text="%s during: %s - %s"%(ref, df['date'].min().strftime('%Y, %b %d'),df['date'].max().strftime('%Y, %b %d'))), 
                      place = 'above')
-        if(ref=='generated'):
+        if((ref=='generated') & (not outlier_count.empty)):
             p.add_layout(Title(text="(Movie of length %d seconds %s on %s was discarded)"%(outlier_count, ref, outlier_date), text_font_style="italic"), 
                           place = 'above')
         p.add_layout(Title(text="Total length of movies {}: {:,.2f} {} ({:,.2f} {}) | Total Movies: {:,} ".format(ref, total_files, unit, total_files/conversion_factor, unit2, total_days), text_font_style="italic"), 
                      place = 'above')
 
         p.legend.location = "top_right"
-        p.grid.grid_line_color="white"
+        p.legend.background_fill_alpha = 0.3
+        p.x_range.range_padding = 0.05
 
         # Add a hover tool referring to the formatted columns
         hover = HoverTool(tooltips = [('Length of movies %s'%(ref), '@f_interval'),
@@ -734,7 +756,20 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
 
         # Add the hover tool to the graph
         p.add_tools(hover)
+        
+        # Add style to the plot
+        p.title.align = 'center'
+        p.title.text_font_size = '18pt'
+        p.xaxis.axis_label_text_font_size = '12pt'
+        p.xaxis.major_label_text_font_size = '12pt'
+        p.yaxis.axis_label_text_font_size = '12pt'
+        p.yaxis.major_label_text_font_size = '12pt'
+#         p.yaxis[0].formatter = PrintfTickFormatter(format="%f")
+        p.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
         p.border_fill_color = "whitesmoke"
+        p.legend.background_fill_alpha = 0.3
+        p.x_range.range_padding = 0.05
+        
         
         p2 = figure(y_axis_type=axis_type,
                            x_axis_label = 'Length of movies (%s)'%(unit), 
@@ -748,7 +783,7 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
                       place = 'above')
         p2.add_layout(Title(text="%s during: %s - %s"%(ref, df['date'].min().strftime('%Y, %b %d'),df['date'].max().strftime('%Y, %b %d'))), 
                       place = 'above')
-        if(ref=='generated'):
+        if((ref=='generated') & (not outlier_count.empty)):
             p2.add_layout(Title(text="(Movie of length %d seconds %s on %s was discarded)"%(outlier_count, ref, outlier_date), text_font_style="italic"), 
                           place = 'above')
         p2.add_layout(Title(text="Total length of movies {}: {:,.2f} {} ({:,.2f} {}) | Total Movies: {:,} ".format(ref, total_files, unit, total_files/conversion_factor, unit2, total_days), text_font_style="italic"), 
@@ -779,6 +814,9 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
 #         p2.yaxis[0].formatter = PrintfTickFormatter(format="0,0%f")
         p2.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
         p2.border_fill_color = "whitesmoke"
+        p2.legend.background_fill_alpha = 0.3
+        p2.x_range.range_padding = 0.05
+        
 
         grid = gridplot([[p, p2]], sizing_mode='stretch_both')# width_policy='max', height_policy='max')#,plot_width=1200, plot_height=1000, sizing_mode='scale_width')#, plot_width=250, plot_height=250)
         panel = Panel(child=grid, title=axis_type)
@@ -929,6 +967,7 @@ for key, title, service in zip(hv.keys(), titles, services):
     p.border_fill_color = "whitesmoke"
     
 #     show(p)
+#     break
     save(p, filename='./%s/time_series.html'%key, title='%s every day'%title)
 print("Time series completed.")
 
@@ -1064,16 +1103,15 @@ for key, title, service in zip(hv.keys(), titles, services):
         p2.xaxis.major_label_text_font_size = '12pt'
         p2.yaxis.axis_label_text_font_size = '12pt'
         p2.yaxis.major_label_text_font_size = '12pt'
-        p2.legend.location = "bottom_right"
-        p2.legend.background_fill_alpha = 0.3
-        
         p2.yaxis[0].formatter = NumeralTickFormatter(format='0,0')
         p2.xaxis[0].formatter = NumeralTickFormatter(format='0,0')
         p2.border_fill_color = "whitesmoke"
-
+        p2.legend.background_fill_alpha = 0.3
+        p2.legend.location = "bottom_right"        
+        p2.x_range.range_padding = 0.05
+        
         grid = gridplot([[p, p2]], sizing_mode='stretch_both')# width_policy='max', height_policy='max')#,plot_width=1200, plot_height=1000, sizing_mode='scale_width')#, plot_width=250, plot_height=250)
         panel = Panel(child=grid, title=axis_type)
-    #     panel = Panel(child=p, title=axis_type)
         panels.append(panel)
     tabs = Tabs(tabs=panels)
 #     show(tabs)
@@ -1284,6 +1322,7 @@ for key, title, service in zip(hv.keys(), titles, services):
         p.ygrid.visible = False
         p.x_range.range_padding = 0.0
         p.y_range.range_padding = 0.0  
+        p.x_range.start = 0
         
 
         p.xaxis.major_label_text_font_size = "8pt"
@@ -1509,7 +1548,7 @@ def popularity_plot(df_obs, df, size, service):
                tools=TOOLS, output_backend='webgl',
                sizing_mode="scale_width", min_border_left = 0)
 
-    p.add_layout(Title(text = "Popularity of %s data in %s %s"%(name, service, key), text_font_size = "16pt", text_font_style="bold"), 
+    p.add_layout(Title(text = "Solar popularity of %s in %s %s"%(name, service, key), text_font_size = "16pt", text_font_style="bold"), 
                  place = 'above')
     p.add_layout(Title(text = "Date Range: %s - %s"%(df['date'].min().strftime('%Y, %b %d'),df['date'].max().strftime('%Y, %b %d'))), 
                  place ='above')
@@ -1557,13 +1596,13 @@ def popularity_plot(df_obs, df, size, service):
     p.line(y='mean', x='height', line_color = "blue", line_dash='dotted', line_width= 1, alpha=0.5, legend_label="Mean (%.2f)"%(df_stats['mean'][0]), source=df_stats)
     p.line(y='median', x='height', line_color = "black", line_dash='dashed', line_width=1, alpha=0.5, legend_label="Median (%.2f)"%(df_stats['median'][0]), source=df_stats)
     
-    p.x_range.start = df['date'].min() - (df['date'].max()-df['date'].min())*0.02
-    p.x_range.end = df['date'].max() + (df['date'].max()-df['date'].min())*0.02
+    p.x_range.start = df['date'].min() - (df['date'].max()-df['date'].min())*0.03
+    p.x_range.end = df['date'].max() + (df['date'].max()-df['date'].min())*0.03
     
-#     p.x_range.range_padding = 0.02
+#     p.x_range.range_padding = 0.1
     p.y_range.range_padding = 0.05
     p.legend.background_fill_alpha = 0.3
-    p.legend.location='top_right'
+    p.legend.location='top_left'
     p.border_fill_color = "whitesmoke"
     
     panel = Panel(child=p, title=name.replace(name.split(" ")[0]+' ', ''))
@@ -1597,7 +1636,7 @@ for observatory in hv_keys.keys():
         panels.append(popularity_plot(df_obs, popularity[ind][0], popularity[ind][1], 'Helioviewer.org'))
         tabs = Tabs(tabs=panels)
 #     show(tabs)
-    save(tabs, filename='./%s/popularity/%s_popularity.html'%(directory, observatory), title='Data Popularity of %s in Helioviewer.org movies'%(observatory))
+    save(tabs, filename='./%s/popularity/%s_popularity.html'%(directory, observatory), title='Solar popularity of %s in Helioviewer.org movies'%(observatory))
     print("%s popularity done in %d seconds"%(observatory, time.time()-start_time))
 print("Popularity plot done.")
 
@@ -1628,7 +1667,7 @@ for observatory in hv_keys.keys():
         panels.append(popularity_plot(df_obs, popularity[ind][0], popularity[ind][1], 'JHelioviewer'))
         tabs = Tabs(tabs=panels)
 #     show(tabs)
-    save(tabs, filename='./%s/popularity/%s_popularity.html'%(directory, observatory), title='Data Popularity of %s in JHelioviewer movies'%(observatory))
+    save(tabs, filename='./%s/popularity/%s_popularity.html'%(directory, observatory), title='Solar popularity of %s in JHelioviewer movies'%(observatory))
     print("%s popularity done in %d seconds"%(observatory, time.time()-start_time))
 print("Popularity plot done.")
 
@@ -1642,6 +1681,7 @@ def obs_popularity(database, df_obs):
     hv={}
     obs = df_obs['OBS']
     sid = df_obs['SOURCE_ID']
+    data_freq = df_obs['DATA_FREQ']
     if(sql_query("SELECT count(*) from data WHERE sourceId=%d"%(sid)).values==0):
         return pd.DataFrame(columns=['date','count']), 0
     
@@ -1661,7 +1701,7 @@ def obs_popularity(database, df_obs):
     if(hv.empty):
         return hv, len(hv)
     hv['duration'] = (hv['endDate']-hv['startDate']).dt.total_seconds()
-    hv['frames'] = (hv['duration']/36).astype(int)
+    hv['frames'] = (hv['duration']/data_freq).astype(int)
     hv.loc[hv['frames']>300, 'frames'] = 300
     df = (pd.concat([pd.Series(pd.date_range(r.startDate, r.endDate, periods=r.frames+1)) for r in hv.iloc[:].itertuples()]).to_frame('date'))
     df = df['date'].dt.to_period('H').dt.to_timestamp().to_frame('date')
@@ -1699,7 +1739,7 @@ def popularity_plot(df_obs, df, size, service):
                tools=TOOLS, output_backend='webgl',
                sizing_mode="scale_width", min_border_left = 0)
 
-    p.add_layout(Title(text = "Popularity of %s data in %s %s"%(name, service, key), text_font_size = "16pt", text_font_style="bold"), 
+    p.add_layout(Title(text = "Data opularity of %s in %s %s"%(name, service, key), text_font_size = "16pt", text_font_style="bold"), 
                  place = 'above')
     p.add_layout(Title(text = "Date Range: %s - %s"%(df['date'].min().strftime('%Y, %b %d'),df['date'].max().strftime('%Y, %b %d'))), 
                  place ='above')
@@ -1747,13 +1787,13 @@ def popularity_plot(df_obs, df, size, service):
     p.line(y='mean', x='height', line_color = "blue", line_dash='dotted', line_width= 1, alpha=0.5, legend_label="Mean (%.2f)"%(df_stats['mean'][0]), source=df_stats)
     p.line(y='median', x='height', line_color = "black", line_dash='dashed', line_width=1, alpha=0.5, legend_label="Median (%.2f)"%(df_stats['median'][0]), source=df_stats)
     
-    p.x_range.start = df['date'].min() - (df['date'].max()-df['date'].min())*0.02
-    p.x_range.end = df['date'].max() + (df['date'].max()-df['date'].min())*0.02
+    p.x_range.start = df['date'].min() - (df['date'].max()-df['date'].min())*0.03
+    p.x_range.end = df['date'].max() + (df['date'].max()-df['date'].min())*0.03
     
 #     p.x_range.range_padding = 0.02
     p.y_range.range_padding = 0.05
     p.legend.background_fill_alpha = 0.3
-    p.legend.location='top_right'
+    p.legend.location='top_left'
     p.border_fill_color = "whitesmoke"
     
     panel = Panel(child=p, title=name.replace(name.split(" ")[0]+' ', ''))
@@ -1774,10 +1814,10 @@ if not os.path.exists("./%s/popularity_data"%directory):
     
 print("Making data popularity plots for helioviewer movies...")
 
-for observatory in hv_keys.keys():
+for observatory in ['SDO']:#hv_keys.keys():
     start_time=time.time()
     h = hv_sid.loc[hv_sid['OBS'].str.match("%s AIA"%observatory)].iloc[:].reset_index(drop=True)
-#     popularity = par(delayed(obs_popularity)('movies', df_obs) for ind, df_obs in h.iterrows())
+    popularity = par(delayed(obs_popularity)('movies', df_obs) for ind, df_obs in h.iterrows())
     panels=[]
     for ind, df_obs in h.iterrows():
         popularity = obs_popularity(database='movies', df_obs=df_obs)
@@ -2337,7 +2377,7 @@ p.add_tools(HoverTool(renderers=p_hv,
 
 p.xaxis.major_label_overrides = {i: date.strftime('%Y %b %d') for i, date in enumerate(df['date'])}
 
-p.x_range.range_padding = 0.02
+p.x_range.range_padding = 0.06
 p.y_range.range_padding = 0.02
 
 p.legend.background_fill_alpha = 0.6
@@ -2415,7 +2455,7 @@ p.add_tools(HoverTool(renderers=p_hv,
 
 p.xaxis.major_label_overrides = {i: date.strftime('%Y %b %d') for i, date in enumerate(df['date'])}
 
-p.x_range.range_padding = 0.02
+p.x_range.range_padding = 0.06
 p.y_range.range_padding = 0.02
 
 p.legend.background_fill_alpha = 0.6
