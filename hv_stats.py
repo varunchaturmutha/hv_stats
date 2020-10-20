@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[3]:
 
 
 # %load_ext autoreload
@@ -51,13 +51,13 @@ import configparser
 weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 
-# In[ ]:
+# In[4]:
 
 
 master_time = time.time()
 
 
-# In[ ]:
+# In[5]:
 
 
 cred={}
@@ -149,7 +149,7 @@ def bin_width(m):
     return bw#, m//n+1
 
 
-# In[ ]:
+# In[6]:
 
 
 json_url = urllib.request.urlopen('https://api.helioviewer.org/?action=getDataSources')
@@ -182,7 +182,7 @@ for key1 in hv_keys.keys():
                                             hv_sid.loc[len(hv_sid)] = " ".join([key1, key2, key3, key4, key5,key6]), hv_keys[key1][key2][key3][key4][key5][key6]['sourceId']    
 
 
-# In[ ]:
+# In[7]:
 
 
 hv_sid = hv_sid.sort_values(['SOURCE_ID']).reset_index(drop=True)
@@ -197,7 +197,7 @@ hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains
 # hv_sid
 
 
-# In[ ]:
+# In[10]:
 
 
 print("Starting SQL query for table data in hv database...")
@@ -212,7 +212,7 @@ results = par(delayed(sql_hv)(df['SOURCE_ID'], df['OBS']) for ind, df in hv_sid.
 print("Querying completed in %d seconds."%(time.time()-start_time))
 
 
-# In[ ]:
+# In[11]:
 
 
 hv = {}
@@ -247,13 +247,13 @@ for (i, df), (ind, sid) in zip(enumerate(results),
 
 # ### All AIA instrument gaps combined
 
-# In[ ]:
+# In[12]:
 
 
 gapfill_percentage = 80
 
 
-# In[ ]:
+# In[17]:
 
 
 df_gaps=pd.DataFrame()
@@ -271,14 +271,14 @@ for ind, df_obs in h.iterrows():
     df_gaps = pd.concat([df_gaps, df]).reset_index(drop=True)
 
 
-# In[ ]:
+# In[18]:
 
 
 df_gaps = pd.DataFrame(df_gaps['date'].unique(), columns=['date'])
 
 df_gaps['end'] = df_gaps['date'] + pd.Timedelta(days=1)
 
-df_gaps = df_gaps.sort_values('date')
+df_gaps = df_gaps.sort_values('date', ascending=False)
 
 df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',', header=False, date_format='"%Y-%m-%d %H:%M:%S"',quoting=csv.QUOTE_NONE, quotechar='',  escapechar='')
 
