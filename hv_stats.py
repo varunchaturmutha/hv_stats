@@ -207,6 +207,13 @@ hv_sid['LAST_DATE'] = pd.Timestamp('now')
 # In[7]:
 
 
+for ind, df in hv_sid.iterrows():
+    hv_sid['LAST_DATE'].iloc[ind] = pd.to_datetime(sql_query("SELECT MAX(date) FROM data WHERE sourceId={}".format(df['SOURCE_ID'])).values[0][0])
+
+
+# In[7]:
+
+
 print("Starting SQL query for table data in hv database...")
 def sql_hv(ind, sourceId, obs=None):
     query = "SELECT date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) WHERE sourceId={} GROUP BY date_format(date, '%Y-%m-%d 00:00:00');".format(sourceId)
@@ -225,13 +232,6 @@ for (i, df), (ind, sid) in zip(enumerate(results),
         hv_sid = hv_sid.drop(index = ind)
         continue
     hv[df['SOURCE_ID'].unique()[0]] = df
-
-
-# In[8]:
-
-
-for ind, df in hv_sid.iterrows():
-    hv_sid['LAST_DATE'].iloc[ind] = pd.to_datetime(sql_query("SELECT MAX(date) FROM data WHERE sourceId={}".format(df['SOURCE_ID'])).values[0][0])
 
 
 # ## Data Gaps
@@ -651,7 +651,7 @@ print("Histograms and cumulative distribution plots completed.")
 
 # # Helioviewer Movie length histogram
 
-# In[16]:
+# In[8]:
 
 
 print("### Helioviewer Movies' Length histogram ###")
@@ -667,7 +667,7 @@ hv['hv_movies'] = sql_query(query)
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[17]:
+# In[9]:
 
 
 df = hv['hv_movies'].copy()
@@ -847,13 +847,13 @@ print("Histograms prepared.")
 
 # # Stats for movies made per day
 
-# In[19]:
+# In[10]:
 
 
 print("### Stats for movies prepared per day ###")
 
 
-# In[20]:
+# In[11]:
 
 
 print("Starting SQL query in movies, screenshots, movies_jpx, statistics tables of hv database...")
@@ -876,7 +876,7 @@ hv['hv_student'] = sql_query(query.format("statistics WHERE action=\'minimal\'")
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[21]:
+# In[12]:
 
 
 titles = ["Helioviewer.org Movies generated", "Helioviewer.org Screenshots generated", 
@@ -890,7 +890,7 @@ for key in hv.keys():
     hv[key] = hv[key].sort_values(['date']).reset_index(drop=True)
 
 
-# In[22]:
+# In[13]:
 
 
 server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11') + pd.Timedelta(days=1))+
@@ -900,7 +900,7 @@ server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11')
 
 # # Time series
 
-# In[23]:
+# In[15]:
 
 
 print("Making time series of movies generated per day...")
@@ -956,7 +956,7 @@ for key, title, service in zip(hv.keys(), titles, services):
 #     p.xaxis[0].ticker.desired_num_ticks = 10
 
     p_line = p.line(x='date', y='count', line_width=2, color='#ebbd5b', source=df_src)
-    p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero %s'%service)
+    p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero %s (%d hours)'%(service, len(df_0)))
     
     service_pause(p, df)
     major_features(p, df)
