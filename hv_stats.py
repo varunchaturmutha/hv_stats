@@ -15,9 +15,6 @@ import datetime
 import pandas as pd
 import csv
 
-import mysql.connector
-from mysql.connector import Error
-
 import MySQLdb as mysqldb
 
 from bokeh.plotting import *
@@ -149,7 +146,7 @@ def bin_width(m):
     return bw#, m//n+1
 
 
-# In[4]:
+# In[ ]:
 
 
 json_url = urllib.request.urlopen('https://api.helioviewer.org/?action=getDataSources')
@@ -182,7 +179,7 @@ for key1 in hv_keys.keys():
                                             hv_sid.loc[len(hv_sid)] = " ".join([key1, key2, key3, key4, key5,key6]), hv_keys[key1][key2][key3][key4][key5][key6]['sourceId']    
 
 
-# In[5]:
+# In[ ]:
 
 
 hv_sid = hv_sid.sort_values(['SOURCE_ID']).reset_index(drop=True)
@@ -198,20 +195,20 @@ hv_sid.loc[(hv_sid['OBS'].str.contains('SDO HMI')), 'DATA_FREQ'] = 45
 # hv_sid
 
 
-# In[6]:
+# In[ ]:
 
 
 hv_sid['LAST_DATE'] = pd.Timestamp('now')
 
 
-# In[7]:
+# In[ ]:
 
 
 for ind, df in hv_sid.iterrows():
     hv_sid['LAST_DATE'].iloc[ind] = pd.to_datetime(sql_query("SELECT MAX(date) FROM data WHERE sourceId={}".format(df['SOURCE_ID'])).values[0][0])
 
 
-# In[7]:
+# In[ ]:
 
 
 print("Starting SQL query for table data in hv database...")
@@ -236,7 +233,7 @@ for (i, df), (ind, sid) in zip(enumerate(results),
 
 # ## Data Gaps
 
-# In[9]:
+# In[ ]:
 
 
 # hv = {}
@@ -252,13 +249,13 @@ for (i, df), (ind, sid) in zip(enumerate(results),
 
 # ### All AIA instrument gaps combined
 
-# In[10]:
+# In[ ]:
 
 
 gapfill_percentage = 80
 
 
-# In[11]:
+# In[ ]:
 
 
 df_gaps=pd.DataFrame()
@@ -285,7 +282,7 @@ for ind, df_obs in h.iterrows():
             df_gaps = pd.concat([df_gaps, df_latest]).reset_index(drop=True)    
 
 
-# In[12]:
+# In[ ]:
 
 
 df_gaps = pd.DataFrame(df_gaps['date'].unique(), columns=['date'])
@@ -299,7 +296,7 @@ df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',
 
 # ### All AIA instrument gaps individually
 
-# In[13]:
+# In[ ]:
 
 
 # hv_sid['DATA_FREQ'] = 0
@@ -350,7 +347,7 @@ df_gaps.to_csv('AIA_data_gaps.csv', columns=["date", "end"], index=False, sep=',
 
 # # Coverages
 
-# In[14]:
+# In[ ]:
 
 
 print("Preparing coverage plots...")
@@ -459,7 +456,7 @@ print("Coverage plots completed.")
 
 # # HISTOGRAMS
 
-# In[15]:
+# In[ ]:
 
 
 print("Preparing histogram and cumulative distribution plots...")
@@ -651,7 +648,7 @@ print("Histograms and cumulative distribution plots completed.")
 
 # # Helioviewer Movie length histogram
 
-# In[8]:
+# In[ ]:
 
 
 print("### Helioviewer Movies' Length histogram ###")
@@ -667,7 +664,7 @@ hv['hv_movies'] = sql_query(query)
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[9]:
+# In[ ]:
 
 
 df = hv['hv_movies'].copy()
@@ -684,7 +681,7 @@ df['genDuration'].loc[df['genDuration']>300] = np.nan
 # df.sort_values('genDuration')
 
 
-# In[18]:
+# In[ ]:
 
 
 # bin_size = 100# 0.5*24*60*60# np.arange(0,count.max(),) 30#.astype(int)#100
@@ -847,13 +844,13 @@ print("Histograms prepared.")
 
 # # Stats for movies made per day
 
-# In[10]:
+# In[ ]:
 
 
 print("### Stats for movies prepared per day ###")
 
 
-# In[11]:
+# In[ ]:
 
 
 print("Starting SQL query in movies, screenshots, movies_jpx, statistics tables of hv database...")
@@ -876,7 +873,7 @@ hv['hv_student'] = sql_query(query.format("statistics WHERE action=\'minimal\'")
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[12]:
+# In[ ]:
 
 
 titles = ["Helioviewer.org Movies generated", "Helioviewer.org Screenshots generated", 
@@ -890,7 +887,7 @@ for key in hv.keys():
     hv[key] = hv[key].sort_values(['date']).reset_index(drop=True)
 
 
-# In[13]:
+# In[ ]:
 
 
 server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11') + pd.Timedelta(days=1))+
@@ -900,7 +897,7 @@ server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11')
 
 # # Time series
 
-# In[15]:
+# In[ ]:
 
 
 print("Making time series of movies generated per day...")
@@ -988,7 +985,7 @@ print("Time series completed.")
 
 # # Histogram of media per day
 
-# In[24]:
+# In[ ]:
 
 
 print("Making histogram of movies generated per day...")
@@ -1136,13 +1133,7 @@ print("Histograms completed.")
 
 # # Weekday frequency distribution
 
-# In[25]:
-
-
-hv[key]
-
-
-# In[26]:
+# In[ ]:
 
 
 print("Making weekday frequency distribution of movies generated per day...")
@@ -1242,7 +1233,7 @@ print("Weekday frequency distribution done")
 
 # # Weekday frequency against week number
 
-# In[27]:
+# In[ ]:
 
 
 df_service = pd.concat([pd.DataFrame({'date': pd.date_range('2011/08/11', '2011/09/18'), 'reason':"GSFC server repair \n (2011/08/11 - 2011/09/18)"}),
@@ -1253,7 +1244,7 @@ df_service['weekday'] = df_service['date'].dt.day_name()
 df_service
 
 
-# In[28]:
+# In[ ]:
 
 
 print("Making weekday frequency against weeknumber distribution of movies generated per day...")
@@ -1386,7 +1377,7 @@ print("Weekday frequency against weeknumber distribution done.")
 
 # ## Weekly weekday distribution
 
-# In[29]:
+# In[ ]:
 
 
 print("Making weekly weekday distribution of movies generated per day...")
@@ -1478,7 +1469,7 @@ for key, title, service in zip(hv.keys(), titles, services):
 print("Weekly weekday distribution done.")
 
 
-# In[30]:
+# In[ ]:
 
 
 print("### Stats for movies per day done. ###")
@@ -1486,7 +1477,7 @@ print("### Stats for movies per day done. ###")
 
 # # Popularity
 
-# In[31]:
+# In[ ]:
 
 
 print("### Popularity plots ###") 
@@ -1494,7 +1485,7 @@ print("### Popularity plots ###")
 
 # ## Popularity of solar time
 
-# In[32]:
+# In[ ]:
 
 
 def obs_popularity(database, df_obs):
@@ -1547,7 +1538,7 @@ def obs_popularity(database, df_obs):
     return df, len(hv)
 
 
-# In[33]:
+# In[ ]:
 
 
 def popularity_plot(df_obs, df, size, service):
@@ -1632,7 +1623,7 @@ def popularity_plot(df_obs, df, size, service):
 
 # ### Solar popularity in Helioviewer movies
 
-# In[34]:
+# In[ ]:
 
 
 par = Parallel(n_jobs=20)
@@ -1663,7 +1654,7 @@ print("Popularity plot done.")
 
 # ### Solar popularity in JHelioviewer movies
 
-# In[35]:
+# In[ ]:
 
 
 par = Parallel(n_jobs=20)
@@ -1694,7 +1685,7 @@ print("Popularity plot done.")
 
 # ## Popularity of THE data in helioviewer.org movies
 
-# In[36]:
+# In[ ]:
 
 
 def obs_popularity(database, df_obs):
@@ -1738,7 +1729,7 @@ def obs_popularity(database, df_obs):
     return df, len(hv) #len(hv) is the actual number of movies created since df will also have a lot of zeros
 
 
-# In[37]:
+# In[ ]:
 
 
 def popularity_plot(df_obs, df, size, service):
@@ -1823,7 +1814,7 @@ def popularity_plot(df_obs, df, size, service):
 
 # ### Data popularity in Helioviewer.org
 
-# In[38]:
+# In[ ]:
 
 
 par = Parallel(n_jobs=20)
@@ -1858,7 +1849,7 @@ print("Popularity plot done.")
 
 # ### Data popularity in Jhelioviewer
 
-# In[39]:
+# In[ ]:
 
 
 # directory="Jhv_movies"
@@ -1889,7 +1880,7 @@ print("Popularity plot done.")
 # print("Popularity plot done.")
 
 
-# In[40]:
+# In[ ]:
 
 
 print("ALL popularity plots done.")
@@ -1897,7 +1888,7 @@ print("ALL popularity plots done.")
 
 # # Service Comparison
 
-# In[41]:
+# In[ ]:
 
 
 print("Service comparison...")
@@ -1905,7 +1896,7 @@ print("Service comparison...")
 
 # ## HV, JHV, embed comparison 
 
-# In[42]:
+# In[ ]:
 
 
 start_time=time.time()
@@ -1925,7 +1916,7 @@ for key in hv.keys():
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[43]:
+# In[ ]:
 
 
 df_em = pd.read_csv('embed.csv')
@@ -1939,14 +1930,14 @@ hv['embed']['date'] = hv['embed'].index
 hv['embed'] = hv['embed'].reset_index(drop=True)
 
 
-# In[44]:
+# In[ ]:
 
 
 date_start = min(hv['hv_movies']['date'].min(), hv['embed']['date'].min(), hv['Jhv_movies']['date'].min())
 date_end = max(hv['hv_movies']['date'].max(), hv['embed']['date'].max(), hv['Jhv_movies']['date'].max())
 
 
-# In[45]:
+# In[ ]:
 
 
 for key in hv.keys():
@@ -1960,7 +1951,7 @@ for key in hv.keys():
     hv[key] = df
 
 
-# In[46]:
+# In[ ]:
 
 
 for key in hv.keys():
@@ -1969,7 +1960,7 @@ for key in hv.keys():
     hv[key].loc[(hv['Jhv_movies']['count']==0) & (hv['embed']['count']==0) & (hv['hv_movies']['count']==0), 'fraction'] = np.nan
 
 
-# In[47]:
+# In[ ]:
 
 
 # total_count = (hv['hv_movies']['count'] + hv['embed']['count'] + hv['Jhv_movies']['count'])
@@ -1987,7 +1978,7 @@ for key in hv.keys():
 # hv['Jhv_movies']['fraction'] = hv['Jhv_movies']['top_frac'] - hv['Jhv_movies']['bottom_frac']
 
 
-# In[48]:
+# In[ ]:
 
 
 frac = pd.DataFrame()
@@ -2013,7 +2004,7 @@ frac['Jhv_bottom'] = frac['em_top']
 frac['Jhv_top'] = frac['Jhv_bottom'] + frac['Jhv_frac']
 
 
-# In[49]:
+# In[ ]:
 
 
 frac['date_str'] = frac['date'].astype(str)
@@ -2022,13 +2013,13 @@ frac['index'] = frac.index
 frac
 
 
-# In[50]:
+# In[ ]:
 
 
 frac['year_dec'] = frac['date'].dt.year + frac['date'].dt.day/pd.to_datetime(dict(year=frac['date'].dt.year, month=12, day=31)).dt.strftime('%j').astype(int)
 
 
-# In[51]:
+# In[ ]:
 
 
 print("Preparing plot for helioviewer services comparison...")
@@ -2147,7 +2138,7 @@ print("Helioviewer service usage fraction plot done.")
 
 # ## HV endpoints' fractional usage breakdown
 
-# In[52]:
+# In[ ]:
 
 
 print("Starting SQL query in redis_stats table of hv database...")
@@ -2157,7 +2148,7 @@ hv = sql_query(query.format('redis_stats WHERE datetime>\'2020-07-01\''))
 print("Query completed in %d seconds"%(time.time()-start_time))
 
 
-# In[53]:
+# In[ ]:
 
 
 heirarchy = {
@@ -2172,7 +2163,7 @@ heirarchy = {
 };
 
 
-# In[54]:
+# In[ ]:
 
 
 hv['date'] = pd.to_datetime(hv['date'])
@@ -2182,7 +2173,7 @@ hv.columns.name = None
 hv=hv.fillna(0)
 
 
-# In[55]:
+# In[ ]:
 
 
 for stat in heirarchy:
@@ -2191,7 +2182,7 @@ for stat in heirarchy:
             hv[action]=0
 
 
-# In[56]:
+# In[ ]:
 
 
 frac={}
@@ -2215,7 +2206,7 @@ for stat in heirarchy.keys():
 #     break
 
 
-# In[57]:
+# In[ ]:
 
 
 panels=[]
@@ -2303,7 +2294,7 @@ print("Helioviewer endpoints' fractional usage breakdown plot done.")
 
 # ## HV usage of end point categories
 
-# In[58]:
+# In[ ]:
 
 
 tot=pd.DataFrame()
@@ -2331,7 +2322,7 @@ frac['date_str'] = frac['date_str'].astype(str)
 # tot = tot.reindex(pd.date_range(tot['date'].min(), tot['date'].max(), freq='D'), fill_value=0).reset_index().rename(columns = {'index':'date'})
 
 
-# In[59]:
+# In[ ]:
 
 
 print("Preparing plot for HV usage comparison of endpoint categories...")
@@ -2410,7 +2401,7 @@ panel = Panel(child=p, title='Total')
 panels.append(panel)
 
 
-# In[60]:
+# In[ ]:
 
 
 df = frac
@@ -2491,14 +2482,14 @@ tabs = Tabs(tabs=panels)
 # show(tabs)
 
 
-# In[61]:
+# In[ ]:
 
 
 save(tabs, filename='%s/hv_endpoints_categorical.html'%directory, title='Helioviewer usage comparison of endpoint categories')
 print("Helioviewer usage comparison of endpoint categories completed")
 
 
-# In[62]:
+# In[ ]:
 
 
 print("ALL PROCSESSES COMPLETED in %d minutes" %((time.time()-master_time)/60))
