@@ -57,32 +57,33 @@ master_time = time.time()
 # In[3]:
 
 
+# get credentials for accessing sql database
 cred={}
 if os.path.exists("/var/www/api.helioviewer.org/install/settings/settings.cfg"):
     configFilePath = "/var/www/api.helioviewer.org/install/settings/settings.cfg"
     configParser = configparser.RawConfigParser()   
     configParser.read(configFilePath)
-    cred['dbhost'] = configParser.get('database', 'dbhost')
-    cred['dbname'] = configParser.get('database', 'dbname')
-    cred['dbuser'] = configParser.get('database', 'dbuser')
-    cred['dbpass'] = configParser.get('database', 'dbpass')
 elif os.path.exists("/home/varun/cred.cfg"):
     configFilePath = "/home/varun/cred.cfg"
     configParser = configparser.RawConfigParser()   
     configParser.read(configFilePath)
-    cred['dbhost'] = configParser.get('database', 'dbhost')
-    cred['dbname'] = configParser.get('database', 'dbname')
-    cred['dbuser'] = configParser.get('database', 'dbuser')
-    cred['dbpass'] = configParser.get('database', 'dbpass')
 else:
     print("ERROR: Please provide a config file with database credentials.")
     sys.exit()
+
+cred['dbhost'] = configParser.get('database', 'dbhost')
+cred['dbname'] = configParser.get('database', 'dbname')
+cred['dbuser'] = configParser.get('database', 'dbuser')
+cred['dbpass'] = configParser.get('database', 'dbpass')
         
+# define sql_query to return results as pandas dataframes
 def sql_query(sql_select_Query):
 
     '''Return data frame obtained with SQL query in the database hv
     '''
-    try:
+    try: # connection
+        records = []
+        column_names= ['name']
         connection = mysqldb.connect(host=cred['dbhost'],
                                      database=cred['dbname'],
                                      user=cred['dbuser'],
@@ -98,46 +99,69 @@ def sql_query(sql_select_Query):
         cursor = connection.cursor()
         cursor.execute(sql_select_Query)
         records = cursor.fetchall()
-        column_names = [i[0] for i in cursor.description]
-        return pd.DataFrame(records, columns=column_names)
+        column_names = [i[0] for i in cursor.description] # extract columns
     except mysqldb.Error as e:
         print("Error reading data from MySQL table", e)
     finally:
-        if (connection.open):
-            connection.close()
+#         if (connection.open):
+        connection.close()
 #             cursor.close()
+        return pd.DataFrame(records, columns=column_names) 
+    
 
-def hv_prepare(hv, sourceId, obs=None):
-    if(hv.empty):
-        hv['SOURCE_ID']=[]
-        return hv
-    hv = hv.sort_values('date').reset_index(drop=True)
-    hv['date'] = pd.to_datetime(hv['date'])
-    hv = hv.set_index('date')
-    hv = hv.reindex(pd.date_range(hv.index.min(), hv.index.max(), freq='D').to_period('D').to_timestamp(), 
-                fill_value=0)
-    hv = hv.reindex(pd.date_range(hv.index.min().replace(day=1), (hv.index.max() + pd.tseries.offsets.MonthEnd(1)), freq='D').to_period('D').to_timestamp(), 
-                fill_value=-1)
-    hv['count'] = hv['count'].astype(int)
-    hv['date'] = hv.index
-    hv = hv.reset_index(drop=True)
-    hv.loc[hv['count']<0, 'count'] = np.nan
-    hv['Year'] = hv['date'].dt.year.astype(str) + ' ' + hv['date'].dt.month_name()
-    hv['Day'] = hv['date'].dt.day.astype(str)
-    hv['SOURCE_ID'] = sourceId
-    hv['OBS'] = obs
-    return hv
+# preapring hv dataframe
+def hv_prepare(df, sourceId, obs=None):
+    if(df.empty):
+        df['SOURCE_ID']=[]
+        return df
+    df = df.sort_values('date').reset_index(drop=True)
+    df['date'] = pd.to_datetime(df['date']) # convert string dates to datetime
+    df = df.set_index('date')
+    df = df.reindex(pd.date_range(df.index.min(), df.index.max(), freq='D').to_period('D').to_timestamp(), 
+                fill_value=0) # fill date gaps with 0
+    df = df.reindex(pd.date_range(df.index.min().replace(day=1), (df.index.max() + pd.tseries.offsets.MonthEnd(1)), freq='D').to_period('D').to_timestamp(), 
+                fill_value=-1) # fill with dummy dates to complete first and last month and fill with -1
+    df['count'] = df['count'].astype(int)
+    df['date'] = df.index
+    df = df.reset_index(drop=True)
+    df.loc[df['count']<0, 'count'] = np.nan # change count of dummy dates to nan
+    df['Year'] = df['date'].dt.year.astype(str) + ' ' + df['date'].dt.month_name() # Year column with year month
+    df['Day'] = df['date'].dt.day.astype(str) # day of the month
+    df['SOURCE_ID'] = sourceId 
+    df['OBS'] = obs
+    return df
 
-def major_features(p, df):
-    p.line(y=np.arange(0, np.nanmax(df['count'])+1), x=pd.Timestamp('2011/06/07'), line_width=1.5, line_dash='dotdash', color='red', alpha=1, legend_label= "failed eruption (2011/06/07)")
-    p.line(y=np.arange(0, np.nanmax(df['count'])+1), x=pd.Timestamp('2013/11/28'), line_width=1.5, line_dash='dotdash', color='purple', alpha=1, legend_label= "Comet ISON (2013/11/28)")
-    p.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=pd.Timestamp('2017/09/06'), x2=pd.Timestamp('2017/09/10'), fill_color='teal', fill_alpha=1, legend_label= "large flares (2017/09/06-09)")
+# major solar features
+def major_features(pp, df):
+    t1 = pd.Timestamp('2011/06/07')
+    if((t1 >= df['date'].min()) & (t1 <= df['date'].max())):
+        pp.line(y=np.arange(0, np.nanmax(df['count'])+1), x=t1, line_width=1.5, line_dash='dotdash', color='red', alpha=1, legend_label= "Failed eruption (2011/06/07)")
+    t1 = pd.Timestamp('2013/11/28') 
+    if((t1 >= df['date'].min()) & (t1 <= df['date'].max())):
+        pp.line(y=np.arange(0, np.nanmax(df['count'])+1), x=t1, line_width=1.5, line_dash='dotdash', color='purple', alpha=1, legend_label= "Comet ISON (2013/11/28)")
+    t1 = pd.Timestamp('2017/09/06')
+    t2 = pd.Timestamp('2017/09/10')
+    if((t1 >= df['date'].min()) & (t2 <= df['date'].max())):
+        pp.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=t1, x2=t2, fill_color='teal', fill_alpha=1, legend_label= "large flares (2017/09/06-09)")
+    return pp
 
-def service_pause(p, df):
-    p.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=pd.Timestamp('2011/08/11'), x2=pd.Timestamp('2011/09/18'), fill_color='gray', fill_alpha=0.3, legend_label= "GSFC server repair (2011/08/11 - 2011/09/18)")
-    p.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=pd.Timestamp('2013/10/01'), x2=pd.Timestamp('2013/10/16'), fill_color='green', fill_alpha=0.3, legend_label= "U.S. Fed. Gov. shutdown (2013/10/01 - 2013/10/16)")
-    p.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=pd.Timestamp('2015/02/04'), x2=pd.Timestamp('2015/09/23'), fill_color='red', fill_alpha=0.1, legend_label= "GSFC server down (2015/02/04 - 2015/09/23)")
+# service interruptions in helioviewer
+def service_pause(pp, df):
+    t1 = pd.Timestamp('2011/08/11')
+    t2 = pd.Timestamp('2011/09/18')
+    if((t1 >= df['date'].min()) & (t2 <=df['date'].max())):
+        pp.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=t1, x2=t2, fill_color='gray', fill_alpha=0.3, legend_label= "GSFC server repair (2011/08/11 - 2011/09/18)")
+    t1 = pd.Timestamp('2013/10/01')
+    t2 = pd.Timestamp('2013/10/16')
+    if((t1 >= df['date'].min()) & (t2 <=df['date'].max())):
+        pp.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=t1, x2=t2, fill_color='green', fill_alpha=0.3, legend_label= "U.S. Fed. Gov. shutdown (2013/10/01 - 2013/10/16)")
+    t1 = pd.Timestamp('2015/02/04')
+    t2 = pd.Timestamp('2015/09/23')
+    if((t1 >= df['date'].min()) & (t2 <=df['date'].max())):
+        pp.harea(y=np.arange(0, np.nanmax(df['count'])+1), x1=t1, x2=t2, fill_color='red', fill_alpha=0.1, legend_label= "GSFC server down (2015/02/04 - 2015/09/23)")
+    return pp
 
+# auto bin width such that the total number of bins are no less than ~36
 def bin_width(m):
     n = np.int(np.log10(m+1))
     n = 10**(n-1)
@@ -146,7 +170,7 @@ def bin_width(m):
     return bw#, m//n+1
 
 
-# In[ ]:
+# In[4]:
 
 
 json_url = urllib.request.urlopen('https://api.helioviewer.org/?action=getDataSources')
@@ -178,11 +202,13 @@ for key1 in hv_keys.keys():
                                         if 'sourceId' in hv_keys[key1][key2][key3][key4][key5][key6].keys(): 
                                             hv_sid.loc[len(hv_sid)] = " ".join([key1, key2, key3, key4, key5,key6]), hv_keys[key1][key2][key3][key4][key5][key6]['sourceId']    
 
+hv_sid = hv_sid.sort_values(['SOURCE_ID']).reset_index(drop=True)                            
 
-# In[ ]:
+
+# In[5]:
 
 
-hv_sid = hv_sid.sort_values(['SOURCE_ID']).reset_index(drop=True)
+# add data freq column to hv_sid; data_freq is total seconds between two hv jp2 images
 hv_sid['DATA_FREQ'] = 0
 
 hv_sid.loc[(hv_sid['OBS'].str.contains('SDO AIA')) & (hv_sid['OBS'].str.contains("|".join(['94', '131', '171', '193', '211', '304', '335']))), 'DATA_FREQ'] = 36
@@ -195,14 +221,12 @@ hv_sid.loc[(hv_sid['OBS'].str.contains('SDO HMI')), 'DATA_FREQ'] = 45
 # hv_sid
 
 
-# In[ ]:
+# In[6]:
 
 
+# add columns for date of last observation to hv_sid in onder to stop data gap filling after mission has ended
+# it is also used to calculate expected files in the middle of the day 
 hv_sid['LAST_DATE'] = pd.Timestamp('now')
-
-
-# In[ ]:
-
 
 for ind, df in hv_sid.iterrows():
     hv_sid['LAST_DATE'].iloc[ind] = pd.to_datetime(sql_query("SELECT MAX(date) FROM data WHERE sourceId={}".format(df['SOURCE_ID'])).values[0][0])
@@ -214,17 +238,24 @@ for ind, df in hv_sid.iterrows():
 print("Starting SQL query for table data in hv database...")
 def sql_hv(ind, sourceId, obs=None):
     query = "SELECT date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) WHERE sourceId={} GROUP BY date_format(date, '%Y-%m-%d 00:00:00');".format(sourceId)
-    hv = sql_query(query)
-    return hv_prepare(hv, sourceId, obs)
+    df_query = sql_query(query)
+    return hv_prepare(df_query, sourceId, obs)
 
 par = Parallel(n_jobs=20)
 start_time=time.time()
-results = par(delayed(sql_hv)(ind, df['SOURCE_ID'], df['OBS']) for ind, df in hv_sid.iterrows())
+# results = par(delayed(sql_hv)(ind, df_obs['SOURCE_ID'], df_obs['OBS']) for ind, df_obs in hv_sid.iloc[:].iterrows())
+results=[]
+for ind, df in hv_sid.iloc[:].iterrows():
+#     print(ind, df['SOURCE_ID'])
+    results.append(sql_hv(ind, df['SOURCE_ID'], df['OBS']))
 print("Querying completed in %d seconds."%(time.time()-start_time))
 
+
+# In[ ]:
+
+
 hv = {}
-for (i, df), (ind, sid) in zip(enumerate(results), 
-                               hv_sid.iterrows()):
+for (i, df), (ind, sid) in zip(enumerate(results), hv_sid.iterrows()):
     if df.empty:
         hv_sid = hv_sid.drop(index = ind)
         continue
@@ -449,6 +480,7 @@ for observatory in hv_keys.keys():
         
     tabs_obs = Tabs(tabs=panels_obs)
 #     show(tabs_obs)
+#     export_png(tabs_obs, filename='test.png')
 #     break
     save(tabs_obs, filename='./coverages/%s_coverage.html'%observatory, title="Coverage plot for %s"%observatory)
 print("Coverage plots completed.")
@@ -658,7 +690,9 @@ hv={}
 # query="SELECT dataSourceString FROM movies"
 # query = "SELECT DATE_FORMAT(reqStartDate, '%1980-%m-%d %H:%i:%S') AS reqStartDate, timestamp, reqEndDate, startDate, endDate, dataSourceString FROM movies"
 # date_format(reqStartDate, '%Y-%m-%d %H:%i:%s') AS REQ_START, date_format(reqEndDate, '%Y-%m-%d %H:%i:%s')
-query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqEndDate!='None' AND reqStartDate!='None' AND startDate!='None' AND endDate!='None';"
+# query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqEndDate!='None' AND reqStartDate!='None' AND startDate!='None' AND endDate!='None';"
+today = datetime.datetime.now().strftime('%Y-%m-%d')
+query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqStartDate<'{0}' AND reqEndDate<'{0}' AND startDate<'{0}' AND endDate<'{0}' AND timestamp<'{0}';".format(today)
 # query = "SELECT ROUND(TIMESTAMPDIFF(second, reqStartDate, reqEndDate)/60/60/24, 3) AS reqDuration, ROUND(TIMESTAMPDIFF(second, startDate, endDate)/60/60/24, 3) AS genDuration FROM movies;"
 hv['hv_movies'] = sql_query(query)
 print("Query completed in %d seconds."%(time.time()-start_time))
@@ -862,11 +896,20 @@ start_time=time.time()
 
 hv['hv_movies'] = sql_query(query.format('movies'))
 
-hv['hv_screenshots'] = sql_query(query.format('screenshots'))
-
 hv['Jhv_movies'] = sql_query(query.format('movies_jpx'))
 
 hv['embed_service'] = sql_query(query.format("statistics WHERE action=\'embed\'"))
+hv['embed_service']['date'] = pd.to_datetime(hv['embed_service']['date'])  
+df_em = pd.read_csv('embed.csv')
+df_em['timestamp'] = pd.to_datetime(df_em['timestamp'])
+df_em = pd.DataFrame(df_em.groupby(by=df_em['timestamp'].dt.date).count()['id'])
+hv['embed_service'].index = hv['embed_service']['date']
+hv['embed_service'] = df_em.join(hv['embed_service'], how='outer')
+hv['embed_service'] = pd.DataFrame(hv['embed_service'][['id','count']].max(axis=1), columns=['count'])
+hv['embed_service']['date'] = hv['embed_service'].index
+hv['embed_service'] = hv['embed_service'].reset_index(drop=True)
+
+hv['hv_screenshots'] = sql_query(query.format('screenshots'))
 
 hv['hv_student'] = sql_query(query.format("statistics WHERE action=\'minimal\'"))
 
@@ -903,6 +946,7 @@ server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11')
 print("Making time series of movies generated per day...")
 for key, title, service in zip(hv.keys(), titles, services):
     directory = key
+    print(key)
     if not os.path.exists(directory):
         os.makedirs(directory)
         
@@ -955,8 +999,8 @@ for key, title, service in zip(hv.keys(), titles, services):
     p_line = p.line(x='date', y='count', line_width=2, color='#ebbd5b', source=df_src)
     p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero %s (%d hours)'%(service, len(df_0)))
     
-    service_pause(p, df)
-    major_features(p, df)
+    p = service_pause(p, df)
+    p = major_features(p, df)
     
     p.add_tools(HoverTool(renderers=[p_line],
                           tooltips=[( 'date',   '@date{%F}'),
@@ -1446,8 +1490,8 @@ for key, title, service in zip(hv.keys(), titles, services):
 #         p.x_range.range_padding = 0.02
         p.y_range.range_padding = 0.05       
         
-        service_pause(p, df_wd)
-        major_features(p, df_wd)
+        p = service_pause(p, df_wd)
+        p = major_features(p, df_wd)
         
         p.line(x='date', y='count', source=df_wd, legend_label="#%s on %s"%(service, wd), color='#ebbd5b')
         
@@ -1584,8 +1628,8 @@ def popularity_plot(df_obs, df, size, service):
 #                                               years=["%d %b %Y"])
 #     p.xaxis.formatter = DatetimeTickFormatter()
 #     p.xaxis.ticker = YearsTicker(desired_num_ticks=10, num_minor_ticks=12)
-    major_features(p, df)
-    service_pause(p, df)
+    p = major_features(p, df)
+    p = service_pause(p, df)
 
     p_line = p.line(x='date', line_width=2, y='count', color='#ebbd5b', source=df, legend_label="Data Popularity")
     p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero movie occurences (%d hours)'%len(df_0))
@@ -1652,6 +1696,12 @@ for observatory in hv_keys.keys():
 print("Popularity plot done.")
 
 
+# In[ ]:
+
+
+popularity=[]
+
+
 # ### Solar popularity in JHelioviewer movies
 
 # In[ ]:
@@ -1681,6 +1731,12 @@ for observatory in hv_keys.keys():
     save(tabs, filename='./%s/popularity/%s_popularity.html'%(directory, observatory), title='Solar popularity of %s in JHelioviewer movies'%(observatory))
     print("%s popularity done in %d seconds"%(observatory, time.time()-start_time))
 print("Popularity plot done.")
+
+
+# In[ ]:
+
+
+popularity=[]
 
 
 # ## Popularity of THE data in helioviewer.org movies
@@ -1775,8 +1831,8 @@ def popularity_plot(df_obs, df, size, service):
 #                                               years=["%d %b %Y"])
 #     p.xaxis.formatter = DatetimeTickFormatter()
 #     p.xaxis.ticker = YearsTicker(desired_num_ticks=10, num_minor_ticks=12)
-    major_features(p, df)
-    service_pause(p, df)
+    p = major_features(p, df)
+    p = service_pause(p, df)
 
     p_line = p.line(x='date', line_width=2, y='count', color='#ebbd5b', source=df, legend_label="Data Popularity")
     p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero movie occurences (%d hours)'%len(df_0))
@@ -1847,6 +1903,12 @@ for observatory in ['SDO']:#hv_keys.keys():
 print("Popularity plot done.")    
 
 
+# In[ ]:
+
+
+popularity=[]
+
+
 # ### Data popularity in Jhelioviewer
 
 # In[ ]:
@@ -1888,7 +1950,7 @@ print("ALL popularity plots done.")
 
 # # Service Comparison
 
-# In[ ]:
+# In[7]:
 
 
 print("Service comparison...")
@@ -1896,7 +1958,7 @@ print("Service comparison...")
 
 # ## HV, JHV, embed comparison 
 
-# In[ ]:
+# In[8]:
 
 
 start_time=time.time()
@@ -1916,7 +1978,7 @@ for key in hv.keys():
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[ ]:
+# In[9]:
 
 
 df_em = pd.read_csv('embed.csv')
@@ -1930,14 +1992,14 @@ hv['embed']['date'] = hv['embed'].index
 hv['embed'] = hv['embed'].reset_index(drop=True)
 
 
-# In[ ]:
+# In[10]:
 
 
 date_start = min(hv['hv_movies']['date'].min(), hv['embed']['date'].min(), hv['Jhv_movies']['date'].min())
 date_end = max(hv['hv_movies']['date'].max(), hv['embed']['date'].max(), hv['Jhv_movies']['date'].max())
 
 
-# In[ ]:
+# In[11]:
 
 
 for key in hv.keys():
@@ -1951,7 +2013,7 @@ for key in hv.keys():
     hv[key] = df
 
 
-# In[ ]:
+# In[12]:
 
 
 for key in hv.keys():
@@ -1960,7 +2022,7 @@ for key in hv.keys():
     hv[key].loc[(hv['Jhv_movies']['count']==0) & (hv['embed']['count']==0) & (hv['hv_movies']['count']==0), 'fraction'] = np.nan
 
 
-# In[ ]:
+# In[13]:
 
 
 # total_count = (hv['hv_movies']['count'] + hv['embed']['count'] + hv['Jhv_movies']['count'])
@@ -1978,7 +2040,7 @@ for key in hv.keys():
 # hv['Jhv_movies']['fraction'] = hv['Jhv_movies']['top_frac'] - hv['Jhv_movies']['bottom_frac']
 
 
-# In[ ]:
+# In[14]:
 
 
 frac = pd.DataFrame()
@@ -2004,7 +2066,7 @@ frac['Jhv_bottom'] = frac['em_top']
 frac['Jhv_top'] = frac['Jhv_bottom'] + frac['Jhv_frac']
 
 
-# In[ ]:
+# In[15]:
 
 
 frac['date_str'] = frac['date'].astype(str)
@@ -2013,13 +2075,13 @@ frac['index'] = frac.index
 frac
 
 
-# In[ ]:
+# In[16]:
 
 
 frac['year_dec'] = frac['date'].dt.year + frac['date'].dt.day/pd.to_datetime(dict(year=frac['date'].dt.year, month=12, day=31)).dt.strftime('%j').astype(int)
 
 
-# In[ ]:
+# In[17]:
 
 
 print("Preparing plot for helioviewer services comparison...")
@@ -2138,7 +2200,7 @@ print("Helioviewer service usage fraction plot done.")
 
 # ## HV endpoints' fractional usage breakdown
 
-# In[ ]:
+# In[18]:
 
 
 print("Starting SQL query in redis_stats table of hv database...")
@@ -2148,7 +2210,7 @@ hv = sql_query(query.format('redis_stats WHERE datetime>\'2020-07-01\''))
 print("Query completed in %d seconds"%(time.time()-start_time))
 
 
-# In[ ]:
+# In[19]:
 
 
 heirarchy = {
@@ -2163,7 +2225,7 @@ heirarchy = {
 };
 
 
-# In[ ]:
+# In[20]:
 
 
 hv['date'] = pd.to_datetime(hv['date'])
@@ -2173,7 +2235,7 @@ hv.columns.name = None
 hv=hv.fillna(0)
 
 
-# In[ ]:
+# In[21]:
 
 
 for stat in heirarchy:
@@ -2182,7 +2244,7 @@ for stat in heirarchy:
             hv[action]=0
 
 
-# In[ ]:
+# In[22]:
 
 
 frac={}
@@ -2206,7 +2268,7 @@ for stat in heirarchy.keys():
 #     break
 
 
-# In[ ]:
+# In[23]:
 
 
 panels=[]
@@ -2294,7 +2356,7 @@ print("Helioviewer endpoints' fractional usage breakdown plot done.")
 
 # ## HV usage of end point categories
 
-# In[ ]:
+# In[24]:
 
 
 tot=pd.DataFrame()
@@ -2322,7 +2384,7 @@ frac['date_str'] = frac['date_str'].astype(str)
 # tot = tot.reindex(pd.date_range(tot['date'].min(), tot['date'].max(), freq='D'), fill_value=0).reset_index().rename(columns = {'index':'date'})
 
 
-# In[ ]:
+# In[25]:
 
 
 print("Preparing plot for HV usage comparison of endpoint categories...")
@@ -2401,7 +2463,7 @@ panel = Panel(child=p, title='Total')
 panels.append(panel)
 
 
-# In[ ]:
+# In[26]:
 
 
 df = frac
@@ -2482,14 +2544,14 @@ tabs = Tabs(tabs=panels)
 # show(tabs)
 
 
-# In[ ]:
+# In[27]:
 
 
 save(tabs, filename='%s/hv_endpoints_categorical.html'%directory, title='Helioviewer usage comparison of endpoint categories')
 print("Helioviewer usage comparison of endpoint categories completed")
 
 
-# In[ ]:
+# In[28]:
 
 
 print("ALL PROCSESSES COMPLETED in %d minutes" %((time.time()-master_time)/60))
