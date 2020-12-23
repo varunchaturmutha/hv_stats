@@ -88,14 +88,6 @@ def sql_query(sql_select_Query):
                                      database=cred['dbname'],
                                      user=cred['dbuser'],
                                      password=cred['dbpass'])
-
-    #     sql_select_Query = "SELECT date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) WHERE sourceId={} GROUP BY date_format(date, '%Y-%m-%d 00:00:00');".format(sourceId)
-    #     sql_select_Query = "SELECT filepath, date, sourceid FROM data WHERE sourceId=%d LIMIT 20;" %sourceId
-    #     sql_select_Query = "SELECT sourceId, date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) WHERE sourceId=8 GROUP BY date_format(date, '%Y-%m-%d 00:00:00'), sourceId;"
-#         sql_select_Query = "SELECT date_format(timestamp, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM movies GROUP BY date_format(timestamp, '%Y-%m-%d 00:00:00');"#.format(sourceId)
-    #     sql_select_Query = "SELECT date_format(date, '%Y-%m-%d 00:00:00') as date, count(*) as count FROM data FORCE INDEX (date_index) GROUP BY date_format(date, '%Y-%m-%d 00:00:00');"
-    #     sql_select_Query = "SELECT count(*) FROM data WHERE filepath LIKE '/AIA/1600/%';"
-    #     sql_select_Query = "SELECT * FROM movies LIMIT 20;"
         cursor = connection.cursor()
         cursor.execute(sql_select_Query)
         records = cursor.fetchall()
@@ -103,9 +95,7 @@ def sql_query(sql_select_Query):
     except mysqldb.Error as e:
         print("Error reading data from MySQL table", e)
     finally:
-#         if (connection.open):
         connection.close()
-#             cursor.close()
         return pd.DataFrame(records, columns=column_names) 
     
 
@@ -231,6 +221,8 @@ hv_sid['LAST_DATE'] = pd.Timestamp('now')
 for ind, df in hv_sid.iterrows():
     hv_sid['LAST_DATE'].iloc[ind] = pd.to_datetime(sql_query("SELECT MAX(date) FROM data WHERE sourceId={}".format(df['SOURCE_ID'])).values[0][0])
 
+
+# # DATA VISUALIZATION
 
 # In[ ]:
 
@@ -680,7 +672,7 @@ print("Histograms and cumulative distribution plots completed.")
 
 # # Helioviewer Movie length histogram
 
-# In[ ]:
+# In[21]:
 
 
 print("### Helioviewer Movies' Length histogram ###")
@@ -691,14 +683,14 @@ hv={}
 # query = "SELECT DATE_FORMAT(reqStartDate, '%1980-%m-%d %H:%i:%S') AS reqStartDate, timestamp, reqEndDate, startDate, endDate, dataSourceString FROM movies"
 # date_format(reqStartDate, '%Y-%m-%d %H:%i:%s') AS REQ_START, date_format(reqEndDate, '%Y-%m-%d %H:%i:%s')
 # query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqEndDate!='None' AND reqStartDate!='None' AND startDate!='None' AND endDate!='None';"
-today = datetime.datetime.now().strftime('%Y-%m-%d')
-query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqStartDate<'{0}' AND reqEndDate<'{0}' AND startDate<'{0}' AND endDate<'{0}' AND timestamp<'{0}';".format(today)
+# today = datetime.datetime.now().strftime('%Y-%m-%d')
+query = "SELECT reqStartDate, reqEndDate, dataSourceString, eventSourceString, numFrames, frameRate, maxFrames, timestamp as date, TIMESTAMPDIFF(second, reqStartDate, reqEndDate) AS reqDuration, TIMESTAMPDIFF(second, startDate, endDate) AS genDuration FROM movies WHERE reqStartDate IS NOT NULL AND reqEndDate IS NOT NULL AND startDate IS NOT NULL AND endDate IS NOT NULL AND timestamp IS NOT NULL;"
 # query = "SELECT ROUND(TIMESTAMPDIFF(second, reqStartDate, reqEndDate)/60/60/24, 3) AS reqDuration, ROUND(TIMESTAMPDIFF(second, startDate, endDate)/60/60/24, 3) AS genDuration FROM movies;"
 hv['hv_movies'] = sql_query(query)
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[ ]:
+# In[64]:
 
 
 df = hv['hv_movies'].copy()
@@ -715,7 +707,7 @@ df['genDuration'].loc[df['genDuration']>300] = np.nan
 # df.sort_values('genDuration')
 
 
-# In[ ]:
+# In[65]:
 
 
 # bin_size = 100# 0.5*24*60*60# np.arange(0,count.max(),) 30#.astype(int)#100
@@ -869,7 +861,7 @@ for pov, ref, bin_size, unit, unit2, conversion_factor in zip(['reqDuration','ge
     tabs = Tabs(tabs=panels)
     panel_pov = Panel(child=tabs, title=ref)
     panels_pov.append(panel_pov)
-
+#     break
 tabs_pov = Tabs(tabs=panels_pov)
 # show(tabs_pov)
 save(tabs_pov, filename='./%s/histogram_length.html'%directory, title='Histogram for length of Helioviewer movies')
@@ -878,13 +870,13 @@ print("Histograms prepared.")
 
 # # Stats for movies made per day
 
-# In[ ]:
+# In[7]:
 
 
 print("### Stats for movies prepared per day ###")
 
 
-# In[ ]:
+# In[8]:
 
 
 print("Starting SQL query in movies, screenshots, movies_jpx, statistics tables of hv database...")
@@ -916,7 +908,7 @@ hv['hv_student'] = sql_query(query.format("statistics WHERE action=\'minimal\'")
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[ ]:
+# In[9]:
 
 
 titles = ["Helioviewer.org Movies generated", "Helioviewer.org Screenshots generated", 
@@ -930,7 +922,7 @@ for key in hv.keys():
     hv[key] = hv[key].sort_values(['date']).reset_index(drop=True)
 
 
-# In[ ]:
+# In[10]:
 
 
 server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11') + pd.Timedelta(days=1))+
@@ -997,7 +989,7 @@ for key, title, service in zip(hv.keys(), titles, services):
 #     p.xaxis[0].ticker.desired_num_ticks = 10
 
     p_line = p.line(x='date', y='count', line_width=2, color='#ebbd5b', source=df_src)
-    p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero %s (%d hours)'%(service, len(df_0)))
+    p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0, legend_label='Zero %s (%d days)'%(service, len(df_0)))
     
     p = service_pause(p, df)
     p = major_features(p, df)
@@ -1277,7 +1269,7 @@ print("Weekday frequency distribution done")
 
 # # Weekday frequency against week number
 
-# In[ ]:
+# In[13]:
 
 
 df_service = pd.concat([pd.DataFrame({'date': pd.date_range('2011/08/11', '2011/09/18'), 'reason':"GSFC server repair \n (2011/08/11 - 2011/09/18)"}),
@@ -1421,7 +1413,7 @@ print("Weekday frequency against weeknumber distribution done.")
 
 # ## Weekly weekday distribution
 
-# In[ ]:
+# In[18]:
 
 
 print("Making weekly weekday distribution of movies generated per day...")
@@ -1479,7 +1471,7 @@ for key, title, service in zip(hv.keys(), titles, services):
         p.add_layout(Title(text="Total {} generated on {}: {:,} | Total {}s: {:,} (excluding {:,} {}s of server downtime)"
                            .format(service, wd, df_wd['count'].sum(), wd, len(df_wd.dropna()), server_downtime_days, wd), text_font_style="italic"), 'above')
         
-        p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0_wd, legend_label='Zero %s'%service)
+        p_0 = p.circle(x='date', y='count', size=2, color='red', source = df_0_wd, legend_label='Zero %s (%s %ss)'%(service, len(df_0_wd), wd))
         
         
         p.title.text_font_size = '16pt'
@@ -1950,7 +1942,7 @@ print("ALL popularity plots done.")
 
 # # Service Comparison
 
-# In[7]:
+# In[ ]:
 
 
 print("Service comparison...")
@@ -1958,7 +1950,7 @@ print("Service comparison...")
 
 # ## HV, JHV, embed comparison 
 
-# In[8]:
+# In[ ]:
 
 
 start_time=time.time()
@@ -1978,7 +1970,7 @@ for key in hv.keys():
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[9]:
+# In[ ]:
 
 
 df_em = pd.read_csv('embed.csv')
@@ -1992,14 +1984,14 @@ hv['embed']['date'] = hv['embed'].index
 hv['embed'] = hv['embed'].reset_index(drop=True)
 
 
-# In[10]:
+# In[ ]:
 
 
 date_start = min(hv['hv_movies']['date'].min(), hv['embed']['date'].min(), hv['Jhv_movies']['date'].min())
 date_end = max(hv['hv_movies']['date'].max(), hv['embed']['date'].max(), hv['Jhv_movies']['date'].max())
 
 
-# In[11]:
+# In[ ]:
 
 
 for key in hv.keys():
@@ -2013,7 +2005,7 @@ for key in hv.keys():
     hv[key] = df
 
 
-# In[12]:
+# In[ ]:
 
 
 for key in hv.keys():
@@ -2022,7 +2014,7 @@ for key in hv.keys():
     hv[key].loc[(hv['Jhv_movies']['count']==0) & (hv['embed']['count']==0) & (hv['hv_movies']['count']==0), 'fraction'] = np.nan
 
 
-# In[13]:
+# In[ ]:
 
 
 # total_count = (hv['hv_movies']['count'] + hv['embed']['count'] + hv['Jhv_movies']['count'])
@@ -2040,7 +2032,7 @@ for key in hv.keys():
 # hv['Jhv_movies']['fraction'] = hv['Jhv_movies']['top_frac'] - hv['Jhv_movies']['bottom_frac']
 
 
-# In[14]:
+# In[ ]:
 
 
 frac = pd.DataFrame()
@@ -2066,7 +2058,7 @@ frac['Jhv_bottom'] = frac['em_top']
 frac['Jhv_top'] = frac['Jhv_bottom'] + frac['Jhv_frac']
 
 
-# In[15]:
+# In[ ]:
 
 
 frac['date_str'] = frac['date'].astype(str)
@@ -2075,13 +2067,13 @@ frac['index'] = frac.index
 frac
 
 
-# In[16]:
+# In[ ]:
 
 
 frac['year_dec'] = frac['date'].dt.year + frac['date'].dt.day/pd.to_datetime(dict(year=frac['date'].dt.year, month=12, day=31)).dt.strftime('%j').astype(int)
 
 
-# In[17]:
+# In[ ]:
 
 
 print("Preparing plot for helioviewer services comparison...")
@@ -2200,7 +2192,7 @@ print("Helioviewer service usage fraction plot done.")
 
 # ## HV endpoints' fractional usage breakdown
 
-# In[18]:
+# In[ ]:
 
 
 print("Starting SQL query in redis_stats table of hv database...")
@@ -2210,7 +2202,7 @@ hv = sql_query(query.format('redis_stats WHERE datetime>\'2020-07-01\''))
 print("Query completed in %d seconds"%(time.time()-start_time))
 
 
-# In[19]:
+# In[ ]:
 
 
 heirarchy = {
@@ -2225,7 +2217,7 @@ heirarchy = {
 };
 
 
-# In[20]:
+# In[ ]:
 
 
 hv['date'] = pd.to_datetime(hv['date'])
@@ -2235,7 +2227,7 @@ hv.columns.name = None
 hv=hv.fillna(0)
 
 
-# In[21]:
+# In[ ]:
 
 
 for stat in heirarchy:
@@ -2244,7 +2236,7 @@ for stat in heirarchy:
             hv[action]=0
 
 
-# In[22]:
+# In[ ]:
 
 
 frac={}
@@ -2268,7 +2260,7 @@ for stat in heirarchy.keys():
 #     break
 
 
-# In[23]:
+# In[ ]:
 
 
 panels=[]
@@ -2356,7 +2348,7 @@ print("Helioviewer endpoints' fractional usage breakdown plot done.")
 
 # ## HV usage of end point categories
 
-# In[24]:
+# In[ ]:
 
 
 tot=pd.DataFrame()
@@ -2384,7 +2376,7 @@ frac['date_str'] = frac['date_str'].astype(str)
 # tot = tot.reindex(pd.date_range(tot['date'].min(), tot['date'].max(), freq='D'), fill_value=0).reset_index().rename(columns = {'index':'date'})
 
 
-# In[25]:
+# In[ ]:
 
 
 print("Preparing plot for HV usage comparison of endpoint categories...")
@@ -2463,7 +2455,7 @@ panel = Panel(child=p, title='Total')
 panels.append(panel)
 
 
-# In[26]:
+# In[ ]:
 
 
 df = frac
@@ -2544,14 +2536,14 @@ tabs = Tabs(tabs=panels)
 # show(tabs)
 
 
-# In[27]:
+# In[ ]:
 
 
 save(tabs, filename='%s/hv_endpoints_categorical.html'%directory, title='Helioviewer usage comparison of endpoint categories')
 print("Helioviewer usage comparison of endpoint categories completed")
 
 
-# In[28]:
+# In[ ]:
 
 
 print("ALL PROCSESSES COMPLETED in %d minutes" %((time.time()-master_time)/60))
