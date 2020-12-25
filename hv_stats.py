@@ -672,7 +672,7 @@ print("Histograms and cumulative distribution plots completed.")
 
 # # Helioviewer Movie length histogram
 
-# In[21]:
+# In[ ]:
 
 
 print("### Helioviewer Movies' Length histogram ###")
@@ -690,7 +690,7 @@ hv['hv_movies'] = sql_query(query)
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[64]:
+# In[ ]:
 
 
 df = hv['hv_movies'].copy()
@@ -707,7 +707,7 @@ df['genDuration'].loc[df['genDuration']>300] = np.nan
 # df.sort_values('genDuration')
 
 
-# In[65]:
+# In[ ]:
 
 
 # bin_size = 100# 0.5*24*60*60# np.arange(0,count.max(),) 30#.astype(int)#100
@@ -870,13 +870,13 @@ print("Histograms prepared.")
 
 # # Stats for movies made per day
 
-# In[7]:
+# In[ ]:
 
 
 print("### Stats for movies prepared per day ###")
 
 
-# In[8]:
+# In[ ]:
 
 
 print("Starting SQL query in movies, screenshots, movies_jpx, statistics tables of hv database...")
@@ -887,6 +887,7 @@ query = "SELECT date_format(timestamp, '%Y-%m-%d 00:00:00') as date, count(*) as
 start_time=time.time()
 
 hv['hv_movies'] = sql_query(query.format('movies'))
+hv['hv_screenshots'] = sql_query(query.format('screenshots'))
 
 hv['Jhv_movies'] = sql_query(query.format('movies_jpx'))
 
@@ -901,19 +902,20 @@ hv['embed_service'] = pd.DataFrame(hv['embed_service'][['id','count']].max(axis=
 hv['embed_service']['date'] = hv['embed_service'].index
 hv['embed_service'] = hv['embed_service'].reset_index(drop=True)
 
-hv['hv_screenshots'] = sql_query(query.format('screenshots'))
-
 hv['hv_student'] = sql_query(query.format("statistics WHERE action=\'minimal\'"))
 
 print("Query completed in %d seconds."%(time.time()-start_time))
 
 
-# In[9]:
+# In[ ]:
 
 
-titles = ["Helioviewer.org Movies generated", "Helioviewer.org Screenshots generated", 
-          "JHelioviewer Movies generated", "Times Embedded Helioviewer.org service was used",
-         "Student Helioviewer Movies generated"]
+titles = ["Helioviewer.org Movies generated", 
+          "Helioviewer.org Screenshots generated", 
+          "JHelioviewer Movies generated", 
+          "Times Embedded Helioviewer.org service was used",
+          "Student Helioviewer Movies generated"]
+
 services= ["Movies", "Screenshots", "Movies", "Embed usage", "Movies"]
 
 for key in hv.keys():
@@ -922,7 +924,7 @@ for key in hv.keys():
     hv[key] = hv[key].sort_values(['date']).reset_index(drop=True)
 
 
-# In[10]:
+# In[ ]:
 
 
 server_shutdown_days = ((pd.Timestamp('2011/09/18') - pd.Timestamp('2011/08/11') + pd.Timedelta(days=1))+
@@ -1269,7 +1271,7 @@ print("Weekday frequency distribution done")
 
 # # Weekday frequency against week number
 
-# In[13]:
+# In[ ]:
 
 
 df_service = pd.concat([pd.DataFrame({'date': pd.date_range('2011/08/11', '2011/09/18'), 'reason':"GSFC server repair \n (2011/08/11 - 2011/09/18)"}),
@@ -1413,7 +1415,7 @@ print("Weekday frequency against weeknumber distribution done.")
 
 # ## Weekly weekday distribution
 
-# In[18]:
+# In[ ]:
 
 
 print("Making weekly weekday distribution of movies generated per day...")
